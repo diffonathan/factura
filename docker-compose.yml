@@ -1,0 +1,60 @@
+# Environnement de développement de Factura.
+#
+#   docker compose up -d          démarre PostgreSQL et PHP
+#   docker compose run --rm php composer install
+#   docker compose run --rm php php artisan migrate
+#
+# Le front (Vite) tourne sur le poste, pas ici : Node est installé nativement
+# et signé, donc Smart App Control le laisse passer. Un conteneur de plus pour
+# lui coûterait de la mémoire sans rien apporter.
+
+name: factura
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: factura-postgres
+    environment:
+      POSTGRES_USER: factura
+      POSTGRES_PASSWORD: factura
+      POSTGRES_DB: factura
+    ports:
+      # 5433 et non 5432 : le PostgreSQL d'un autre projet peut déjà occuper
+      # le port standard. Deux bases de développement doivent pouvoir vivre
+      # ensemble sans qu'on ait à en arrêter une.
+      - "5433:5432"
+    volumes:
+      - factura-donnees:/var/lib/postgresql/data
+    mem_limit: 320m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U factura"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: factura-php
+    ports:
+      - "8000:8000"
+    volumes:
+      # Le code vit sur le poste et n'est que monté : on édite dans son éditeur
+      # habituel, le conteneur voit la modification aussitôt.
+      - .:/app
+    environment:
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: factura
+      DB_USERNAME: factura
+      DB_PASSWORD: factura
+    mem_limit: 512m
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  factura-donnees:
