@@ -144,7 +144,7 @@ final class DocumentController extends Controller
 
             'emetteur' => [
                 'raison_sociale' => $document->entreprise->raison_sociale
-                    . ($document->entreprise->forme_juridique ? ' ' . $document->entreprise->forme_juridique : ''),
+                    .($document->entreprise->forme_juridique ? ' '.$document->entreprise->forme_juridique : ''),
                 'adresse' => $document->entreprise->adresse,
                 'ville' => $document->entreprise->ville,
                 'telephone' => $document->entreprise->telephone,

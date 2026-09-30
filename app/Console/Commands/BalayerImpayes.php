@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Facturation\ServiceRelance;
 use App\Jobs\EnvoyerRelance;
+use App\Models\Relance;
 use Illuminate\Console\Command;
 
 /**
@@ -41,9 +42,9 @@ final class BalayerImpayes extends Command
             $lignes[] = [
                 $facture->reference,
                 $facture->client->nom,
-                $facture->resteAPayer() . ' ' . $facture->devise,
-                $facture->joursDeRetard() . ' j',
-                $niveau . ' — ' . (\App\Models\Relance::NIVEAUX[$niveau] ?? ''),
+                $facture->resteAPayer().' '.$facture->devise,
+                $facture->joursDeRetard().' j',
+                $niveau.' — '.(Relance::NIVEAUX[$niveau] ?? ''),
             ];
 
             if (! $this->option('a-blanc')) {
@@ -54,8 +55,8 @@ final class BalayerImpayes extends Command
         $this->table(['Facture', 'Client', 'Reste dû', 'Retard', 'Niveau'], $lignes);
 
         $this->info($this->option('a-blanc')
-            ? count($lignes) . ' relance(s) seraient mises en file.'
-            : count($lignes) . ' relance(s) mises en file.');
+            ? count($lignes).' relance(s) seraient mises en file.'
+            : count($lignes).' relance(s) mises en file.');
 
         return self::SUCCESS;
     }

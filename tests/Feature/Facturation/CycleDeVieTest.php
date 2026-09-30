@@ -9,6 +9,7 @@ use App\Facturation\Exceptions\DocumentNonEmissible;
 use App\Facturation\ServiceEmission;
 use App\Facturation\StatutDocument;
 use App\Facturation\TypeDocument;
+use App\Models\Document;
 use App\Models\Entreprise;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -114,7 +115,7 @@ final class CycleDeVieTest extends TestCase
         $avoir = $this->emettre($this->emission->preparerAvoir($facture));
 
         $this->assertSame(TypeDocument::Avoir, $avoir->type);
-        $this->assertSame('AV-' . now()->year . '-0001', $avoir->reference);
+        $this->assertSame('AV-'.now()->year.'-0001', $avoir->reference);
         $this->assertSame('1200.00', $avoir->montant_ttc);
         $this->assertSame($facture->id, $avoir->origine_id);
 
@@ -241,7 +242,7 @@ final class CycleDeVieTest extends TestCase
     public function un_document_sans_ligne_ne_semet_pas(): void
     {
         $client = $this->clientDe($this->entrepriseEnRegle());
-        $vide = \App\Models\Document::factory()->pour($client)->create();
+        $vide = Document::factory()->pour($client)->create();
 
         try {
             $this->emettre($vide);

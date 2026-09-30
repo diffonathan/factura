@@ -8,6 +8,7 @@ use App\Facturation\Exceptions\ConflitFacturation;
 use App\Facturation\Exceptions\DocumentNonEmissible;
 use App\Models\Document;
 use App\Models\Ligne;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -28,7 +29,7 @@ final class ServiceEmission
      * Émet un brouillon : lui attribue son numéro et le fige.
      *
      * @throws DocumentNonEmissible s'il manque quelque chose au document
-     * @throws ConflitFacturation   s'il a déjà été émis entre-temps
+     * @throws ConflitFacturation s'il a déjà été émis entre-temps
      */
     public function emettre(Document $document): Document
     {
@@ -174,7 +175,7 @@ final class ServiceEmission
                 'client_id' => $facture->client_id,
                 'type' => TypeDocument::Avoir->value,
                 'date_emission' => now()->toDateString(),
-                'objet' => 'Avoir sur ' . $facture->reference,
+                'objet' => 'Avoir sur '.$facture->reference,
                 'origine_id' => $facture->id,
                 'devise' => $facture->devise,
             ]);
@@ -245,7 +246,7 @@ final class ServiceEmission
 
         if ($manques !== []) {
             throw new DocumentNonEmissible(
-                'Il manque ' . $this->enumerer($manques) . '.',
+                'Il manque '.$this->enumerer($manques).'.',
                 $manques,
             );
         }
@@ -334,7 +335,7 @@ final class ServiceEmission
         }
     }
 
-    private function echeanceParDefaut(Document $document): \Illuminate\Support\Carbon
+    private function echeanceParDefaut(Document $document): Carbon
     {
         return match ($document->type) {
             // Un devis a une durée de validité, pas une échéance de paiement.
@@ -357,6 +358,6 @@ final class ServiceEmission
 
         $dernier = array_pop($elements);
 
-        return implode(', ', $elements) . ' et ' . $dernier;
+        return implode(', ', $elements).' et '.$dernier;
     }
 }

@@ -52,7 +52,7 @@ final class ServiceNumerotation
         if (DB::transactionLevel() === 0) {
             throw new LogicException(
                 'reserver() doit être appelé dans une transaction : hors transaction, '
-                . 'un numéro réservé puis abandonné laisse un trou dans la série.'
+                .'un numéro réservé puis abandonné laisse un trou dans la série.'
             );
         }
 

@@ -29,7 +29,7 @@ class EntrepriseFactory extends Factory
             'taxe_professionnelle' => (string) $this->faker->numerify('########'),
             'adresse' => $this->faker->streetAddress(),
             'ville' => $this->faker->randomElement(['Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Agadir', 'Fès']),
-            'telephone' => '+212 5' . $this->faker->numerify('## ## ## ##'),
+            'telephone' => '+212 5'.$this->faker->numerify('## ## ## ##'),
             'email' => $this->faker->companyEmail(),
             'regime_tva' => 'DEBIT',
         ];

@@ -1,0 +1,92 @@
+name: Tests
+
+# Sur chaque poussée et chaque demande de fusion. Une suite qui ne tourne que
+# sur le poste du développeur finit par ne plus tourner du tout.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  suite:
+    name: PHPUnit sur PostgreSQL
+    runs-on: ubuntu-latest
+
+    services:
+      # Un VRAI PostgreSQL, pas SQLite en mémoire.
+      #
+      # Tout ce que ce projet garantit est écrit en PostgreSQL : colonnes
+      # GENERATED, index partiels, contraintes CHECK, triggers, verrous de
+      # ligne. SQLite n'en connaît presque rien et laisserait passer
+      # exactement les erreurs que ces tests existent pour attraper. Une suite
+      # verte sur une base qui n'est pas celle de la production est pire
+      # qu'une suite absente : elle rassure à tort.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: factura
+          POSTGRES_PASSWORD: factura
+          POSTGRES_DB: factura_test
+        ports:
+          - 5432:5432
+        # Sans ce contrôle, les tests démarrent avant que la base accepte les
+        # connexions, et l'échec ressemble à un défaut du code.
+        options: >-
+          --health-cmd "pg_isready -U factura"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_pgsql, intl, zip, bcmath, mbstring
+          coverage: none
+
+      - name: Restaurer le cache de Composer
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+
+      - name: Installer les dépendances PHP
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Vérifier le style de code
+        run: vendor/bin/pint --test
+
+      - name: Lancer la suite
+        # `DB_HOST` pointe vers le service exposé sur la machine du job, et non
+        # vers `postgres` : le job ne tourne pas dans le réseau de Compose.
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: factura_test
+          DB_USERNAME: factura
+          DB_PASSWORD: factura
+        run: php artisan test
+
+  front:
+    name: Construction du front
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      # Une erreur de syntaxe dans un composant Vue ne se voit qu'à la
+      # construction : le serveur de développement la tolère parfois, la
+      # production jamais.
+      - run: npm run build

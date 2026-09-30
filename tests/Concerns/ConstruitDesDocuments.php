@@ -10,6 +10,8 @@ use App\Models\Client;
 use App\Models\Document;
 use App\Models\Entreprise;
 use App\Models\Ligne;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Le décor commun des tests de facturation : une entreprise en règle, un
@@ -88,17 +90,17 @@ trait ConstruitDesDocuments
         $attendus = (array) $sqlstate;
 
         try {
-            \Illuminate\Support\Facades\DB::transaction($ecriture);
+            DB::transaction($ecriture);
 
             $this->fail($message !== '' ? $message : sprintf(
                 'La base a accepté une écriture qu\'elle aurait dû refuser (%s attendu).',
                 implode(' ou ', $attendus),
             ));
-        } catch (\Illuminate\Database\QueryException $erreur) {
+        } catch (QueryException $erreur) {
             $this->assertContains(
                 (string) $erreur->getCode(),
                 $attendus,
-                'Refus obtenu, mais pas pour la raison attendue : ' . $erreur->getMessage(),
+                'Refus obtenu, mais pas pour la raison attendue : '.$erreur->getMessage(),
             );
         }
     }

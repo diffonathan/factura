@@ -32,7 +32,7 @@ trait AppartientAEntreprise
 {
     public static function bootAppartientAEntreprise(): void
     {
-        static::addGlobalScope(new ScopeEntreprise());
+        static::addGlobalScope(new ScopeEntreprise);
 
         static::creating(function (self $modele): void {
             if ($modele->entreprise_id === null) {

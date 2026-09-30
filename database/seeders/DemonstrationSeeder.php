@@ -7,7 +7,6 @@ namespace Database\Seeders;
 use App\Facturation\ModePaiement;
 use App\Facturation\ServiceEmission;
 use App\Facturation\ServiceEncaissement;
-use App\Facturation\StatutDocument;
 use App\Facturation\TypeDocument;
 use App\Models\Client;
 use App\Models\Document;
@@ -60,7 +59,7 @@ final class DemonstrationSeeder extends Seeder
         $this->factureAvecAvoir($clients['pharmacie']);
         $this->brouillonEnCours($clients['menuiserie']);
 
-        $this->command?->info('Jeu de démonstration prêt : ' . $entreprise->raison_sociale);
+        $this->command?->info('Jeu de démonstration prêt : '.$entreprise->raison_sociale);
         $this->command?->line('  Connexion : demo@factura.ma / demonstration');
     }
 

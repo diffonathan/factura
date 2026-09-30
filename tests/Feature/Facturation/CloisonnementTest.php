@@ -175,7 +175,7 @@ final class CloisonnementTest extends TestCase
                 ['23514', '22001'],
                 fn () => Client::factory()->create([
                     'entreprise_id' => $atlas->id,
-                    'nom' => 'Client ' . $mauvais,
+                    'nom' => 'Client '.$mauvais,
                     'ice' => $mauvais,
                 ]),
                 "L'ICE « {$mauvais} » a été accepté.",

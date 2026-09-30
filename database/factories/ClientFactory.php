@@ -25,7 +25,7 @@ class ClientFactory extends Factory
             'identifiant_fiscal' => (string) $this->faker->numerify('########'),
             'adresse' => $this->faker->streetAddress(),
             'ville' => $this->faker->randomElement(['Casablanca', 'Rabat', 'Marrakech', 'Tanger']),
-            'telephone' => '+212 6' . $this->faker->numerify('## ## ## ##'),
+            'telephone' => '+212 6'.$this->faker->numerify('## ## ## ##'),
             'email' => $this->faker->safeEmail(),
             'delai_paiement_jours' => 30,
         ];

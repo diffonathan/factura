@@ -67,7 +67,7 @@ final class ConcurrenceNumerotationTest extends TestCase
             $this->executerCompteur($autreSession, $entreprise->id, $annee);
             $this->fail(
                 'La seconde session a incrémenté le compteur sans attendre : '
-                . 'deux factures pourraient porter le même numéro.'
+                .'deux factures pourraient porter le même numéro.'
             );
         } catch (PDOException $erreur) {
             // 55P03 = lock_not_available : le délai a expiré sur un verrou tenu.

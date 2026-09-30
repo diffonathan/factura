@@ -6,8 +6,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * L'entreprise qui facture. Racine du cloisonnement : elle n'est jamais
@@ -51,11 +51,11 @@ class Entreprise extends Model
     public function mentionsLegales(): array
     {
         return array_values(array_filter([
-            $this->ice ? 'ICE : ' . $this->ice : null,
-            $this->identifiant_fiscal ? 'IF : ' . $this->identifiant_fiscal : null,
-            $this->registre_commerce ? 'RC : ' . $this->registre_commerce : null,
-            $this->taxe_professionnelle ? 'TP : ' . $this->taxe_professionnelle : null,
-            $this->cnss ? 'CNSS : ' . $this->cnss : null,
+            $this->ice ? 'ICE : '.$this->ice : null,
+            $this->identifiant_fiscal ? 'IF : '.$this->identifiant_fiscal : null,
+            $this->registre_commerce ? 'RC : '.$this->registre_commerce : null,
+            $this->taxe_professionnelle ? 'TP : '.$this->taxe_professionnelle : null,
+            $this->cnss ? 'CNSS : '.$this->cnss : null,
         ]));
     }
 

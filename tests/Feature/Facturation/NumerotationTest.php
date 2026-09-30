@@ -200,7 +200,7 @@ final class NumerotationTest extends TestCase
             2,
             $suivant,
             'Une séquence qui reviendrait en arrière rendrait ce test inutile ; '
-            . 'le compteur transactionnel n\'aurait plus de raison d\'être.'
+            .'le compteur transactionnel n\'aurait plus de raison d\'être.'
         );
     }
 
