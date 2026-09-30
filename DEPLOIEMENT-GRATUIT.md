@@ -27,7 +27,7 @@ renseigner.
 Le premier déploiement prend cinq à huit minutes : il construit le front,
 installe les dépendances PHP, puis joue les migrations au démarrage.
 
-## 2. Les quatre variables
+## 2. Les variables
 
 Tout ce qui n'est pas secret est déjà dans l'image. Il ne reste que ceci, à
 saisir dans **Variables** :
@@ -35,9 +35,43 @@ saisir dans **Variables** :
 | Variable | Valeur |
 |---|---|
 | `APP_KEY` | voir ci-dessous |
-| `DB_URL` | la chaîne Neon, avec `/factura` avant le `?` |
 | `DOCUMENTATION_MOT_DE_PASSE` | celui de votre choix |
-| `APP_URL` | l'adresse donnée par Zeabur, à remplir **après** le premier déploiement |
+| `APP_URL` | l'adresse donnée par Back4App, à remplir **après** le premier déploiement |
+
+Puis la base, **au choix** entre deux formes.
+
+### Forme courte, une seule variable
+
+| Variable | Valeur |
+|---|---|
+| `DB_URL` | la chaîne Neon complète, avec `/factura` avant le `?` |
+
+C'est le plus rapide, et c'est ce que Neon donne à copier. Mais attention :
+**une adresse est analysée.** Si le mot de passe contient `@ : / ? # % &`,
+le découpage part de travers.
+
+Mesuré, pas supposé : avec le mot de passe `a@b/c:d`, Laravel retient `a`
+comme mot de passe, prend **`b` pour le nom du serveur**, et avale le reste
+comme nom de base. L'erreur affichée est alors « hôte introuvable » en
+désignant une machine qui ne figure nulle part dans ce que vous avez collé.
+
+### Forme longue, cinq variables
+
+| Variable | Valeur |
+|---|---|
+| `DB_HOST` | l'hôte seul, sans `postgresql://` ni `/` |
+| `DB_PORT` | `5432` |
+| `DB_DATABASE` | `factura` |
+| `DB_USERNAME` | l'utilisateur Neon |
+| `DB_PASSWORD` | le mot de passe, **tel quel**, sans encodage |
+| `DB_SSLMODE` | `require` (posé tout seul si vous l'omettez) |
+
+Aucune analyse n'a lieu : le mot de passe passe intact, quels que soient ses
+caractères. **À préférer dès que le mot de passe n'est pas purement
+alphanumérique.**
+
+Si `DB_URL` est renseignée, elle gagne : pour passer à la forme longue, il
+faut **supprimer** `DB_URL`, pas seulement ajouter les cinq autres.
 
 ### Produire l'APP_KEY
 
