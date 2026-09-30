@@ -24,7 +24,18 @@ RUN apk add --no-cache libpq icu-libs libzip oniguruma \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql intl zip bcmath opcache \
     && apk del .build-deps
 
+# Les réglages d'opcache et du cache de chemins. Sans eux, chaque requête
+# relit des centaines de fichiers à travers le montage Windows : l'application
+# répond en plusieurs secondes et paraît cassée.
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/factura.ini
+
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Le bit d'exécution est posé ici, pas hérité du poste : Git sous Windows ne
+# conserve pas les permissions, et un script copié sans +x fait échouer le
+# démarrage avec « permission denied ».
+COPY docker/php/entrypoint.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint
 
 WORKDIR /app
 
@@ -32,4 +43,5 @@ WORKDIR /app
 # sans 0.0.0.0, il n'écouterait que la boucle locale DU CONTENEUR et resterait
 # injoignable depuis Windows.
 EXPOSE 8000
+ENTRYPOINT ["entrypoint"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]

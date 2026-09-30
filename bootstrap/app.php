@@ -2,6 +2,7 @@
 
 use App\Facturation\Exceptions\DocumentNonEmissible;
 use App\Facturation\Exceptions\ErreurFacturation;
+use App\Http\Middleware\DefinirEntrepriseCourante;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,6 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
+
+        // L'entreprise courante, posée avant tout contrôleur. C'est ce qui
+        // rend le cloisonnement automatique : à partir d'ici les modèles
+        // filtrent seuls, et un contrôleur ne peut plus l'oublier.
+        $middleware->alias([
+            'entreprise' => DefinirEntrepriseCourante::class,
+        ]);
+
+        // Sans cela, un visiteur non connecté reçoit la page de connexion de
+        // Laravel par défaut, à une route `login` qui n'existe pas ici.
+        $middleware->redirectGuestsTo(fn () => route('connexion'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -1,21 +1,47 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+declare(strict_types=1);
 
-/**
- * Page d'accueil provisoire.
+use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ConnexionController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\TableauDeBordController;
+use Illuminate\Support\Facades\Route;
+
+/*
+ * Les chemins sont en français, comme le reste du domaine. Mélanger
+ * `/documents/{document}/emettre` et `/invoices/{invoice}/issue` dans la même
+ * application oblige à traduire mentalement à chaque lecture.
  *
- * Elle ne montre rien de métier : elle prouve que la chaîne complète répond —
- * Laravel rend une page Vue par Inertia, et les valeurs affichées viennent
- * réellement du serveur, pas du navigateur. Elle sera remplacée par le
- * tableau de bord de facturation.
+ * `middleware('entreprise')` accompagne `auth` partout : c'est lui qui pose
+ * l'entreprise courante, donc le cloisonnement. Une route qui l'oublierait
+ * verrait toutes les entreprises — d'où le groupe unique plutôt qu'une
+ * déclaration route par route.
  */
-Route::get('/', function () {
-    return Inertia::render('Accueil', [
-        'laravel' => app()->version(),
-        'php' => PHP_VERSION,
-        'base' => DB::connection()->getDriverName(),
-    ]);
-})->name('accueil');
+
+Route::middleware('guest')->group(function (): void {
+    Route::get('/connexion', [ConnexionController::class, 'formulaire'])->name('connexion');
+    Route::post('/connexion', [ConnexionController::class, 'connecter']);
+});
+
+Route::post('/deconnexion', [ConnexionController::class, 'deconnecter'])
+    ->middleware('auth')
+    ->name('deconnexion');
+
+Route::middleware(['auth', 'entreprise'])->group(function (): void {
+    Route::get('/', [TableauDeBordController::class, 'index'])->name('tableau-de-bord');
+
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+
+    Route::post('/documents/{document}/emettre', [DocumentController::class, 'emettre'])
+        ->name('documents.emettre');
+    Route::post('/documents/{document}/convertir', [DocumentController::class, 'convertir'])
+        ->name('documents.convertir');
+    Route::post('/documents/{document}/avoir', [DocumentController::class, 'avoir'])
+        ->name('documents.avoir');
+    Route::post('/documents/{document}/encaisser', [DocumentController::class, 'encaisser'])
+        ->name('documents.encaisser');
+
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+});

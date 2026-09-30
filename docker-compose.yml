@@ -44,6 +44,28 @@ services:
       # Le code vit sur le poste et n'est que monté : on édite dans son éditeur
       # habituel, le conteneur voit la modification aussitôt.
       - .:/app
+
+      # MAIS PAS `vendor/`, qui reste dans un volume Docker.
+      #
+      # Chaque requête Laravel ouvre plus de mille fichiers de `vendor/`. À
+      # travers le pont de fichiers de Docker Desktop, chacun coûte quelques
+      # millisecondes : l'amorçage seul mettait 4 secondes, mesuré, avant même
+      # qu'une route soit résolue. Dans un volume, ces fichiers sont sur le
+      # système du conteneur et l'amorçage retombe à quelques dizaines de
+      # millisecondes.
+      #
+      # Contrepartie assumée : `vendor/` n'existe plus sur le poste, donc
+      # l'éditeur n'y trouve plus les sources de Laravel pour l'autocomplétion.
+      # `composer install` doit tourner DANS le conteneur — ce qui était déjà
+      # le cas, puisque PHP n'y est pas installé.
+      - factura-vendor:/app/vendor
+    environment:
+      # Le serveur intégré de PHP traite UNE requête à la fois. Une page qui
+      # demande son CSS, son JS et son icône fait attendre chacun derrière le
+      # précédent, et la lenteur ressemble à celle de l'application alors
+      # qu'elle est dans la file d'attente. Quatre ouvriers suffisent ici.
+      PHP_CLI_SERVER_WORKERS: "4"
+
     # Aucune variable DB_* ici, volontairement. Une variable d'environnement
     # du conteneur écrase tout : le `.env`, le `.env.testing`, et jusqu'aux
     # valeurs déclarées dans `phpunit.xml`. La suite de tests a tourné une fois
@@ -57,3 +79,4 @@ services:
 
 volumes:
   factura-donnees:
+  factura-vendor:

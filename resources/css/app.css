@@ -3,7 +3,50 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+    La charte de Factura.
+    ---------------------
+    Une application de facturation se lit, elle ne s'admire pas : on y cherche
+    un montant, une date, un reste dû. D'où un fond papier plutôt que blanc
+    pur, une encre très sombre mais pas noire, et UNE seule couleur d'accent.
+
+    Le vert profond n'est pas décoratif : il ne sert qu'à ce qui est rentré en
+    caisse. L'ambre signale l'échéance qui approche, le rouge brique l'impayé.
+    Trois couleurs, trois significations, jamais interchangées — un utilisateur
+    doit pouvoir lire l'état d'une facture sans lire le texte.
+
+    Les nombres sont en fonte à espacement fixe. Dans une colonne de montants,
+    une fonte proportionnelle décale les chiffres d'une ligne à l'autre et
+    empêche de comparer deux totaux d'un coup d'œil.
+*/
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+    --color-papier: #fbfaf7;
+    --color-papier-creux: #f4f2ed;
+    --color-encre: #14201c;
+    --color-encre-douce: #5d6b66;
+    --color-trait: #e5e2da;
+
+    --color-caisse: #0f7b45;
+    --color-caisse-clair: #e8f3ec;
+    --color-echeance: #b45309;
+    --color-echeance-clair: #fdf3e7;
+    --color-impaye: #a8321f;
+    --color-impaye-clair: #fbeeeb;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-papier);
+        color: var(--color-encre);
+    }
+
+    /* Les montants et les références : toujours en chiffres alignés. */
+    .nombre {
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.01em;
+    }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Entreprise;
+use App\Support\EntrepriseCourante;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -33,11 +35,34 @@ class HandleInertiaRequests extends Middleware
      *
      * @return array<string, mixed>
      */
-    public function share(Request $request): array
+    public function share(Request $requete): array
     {
+        $utilisateur = $requete->user();
+        $courante = app(EntrepriseCourante::class);
+
         return [
-            ...parent::share($request),
-            //
+            ...parent::share($requete),
+
+            // Partagé plutôt que renvoyé par chaque contrôleur : l'en-tête en a
+            // besoin sur toutes les pages, et le répéter vingt fois finit par
+            // un oubli sur la vingt-et-unième.
+            'utilisateur' => $utilisateur ? [
+                'nom' => $utilisateur->name,
+                'email' => $utilisateur->email,
+                'role' => $courante->estDefinie()
+                    ? $utilisateur->roleDans($courante->id())
+                    : null,
+            ] : null,
+
+            'entreprise' => fn () => $courante->estDefinie()
+                ? Entreprise::find($courante->id())?->only(['id', 'raison_sociale', 'ville'])
+                : null,
+
+            // Les messages d'une action réussie. Fermeture différée : Inertia
+            // ne l'évalue que lorsqu'il envoie réellement la page.
+            'flash' => [
+                'succes' => fn () => $requete->session()->get('succes'),
+            ],
         ];
     }
 }
