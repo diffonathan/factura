@@ -15,9 +15,14 @@ L'offre libre donne 256 Mo. Mesuré sur cette image : **70 Mo** au repos. Large.
 **back4app.com** → inscription → **Containers** → **Deploy a Web App** →
 connecter GitHub → dépôt **`diffonathan/factura`**.
 
-⚠️ **Le Dockerfile n'est pas à la racine.** Dans les réglages du déploiement,
-renseignez le chemin **`docker/php/Dockerfile.production`** : celui de la
-racine sert au développement et n'a rien à faire en production.
+Le `Dockerfile` est à la racine et Back4App le trouve seul — rien à
+renseigner.
+
+> **Pourquoi il y est.** Un premier essai le plaçait dans `docker/php/`, ce
+> qui se lit mieux. Back4App n'a rien trouvé à la racine, a vu le
+> `package.json` du front, conclu « application Node », et construit une image
+> sans PHP. Le déploiement est mort sur « node: command not found ». Un
+> hébergeur qui ne trouve pas de Dockerfile ne renonce pas : il devine.
 
 Le premier déploiement prend cinq à huit minutes : il construit le front,
 installe les dépendances PHP, puis joue les migrations au démarrage.

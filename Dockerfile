@@ -1,5 +1,18 @@
 # Image de production de Factura.
 #
+# ⚠️ À LA RACINE, et il faut qu'elle y reste.
+#
+# Elle vivait dans `docker/php/Dockerfile.production`, ce qui était plus propre
+# à lire. Mais un hébergeur qui construit depuis un dépôt cherche un
+# `Dockerfile` à la racine, et s'il n'en trouve pas il DEVINE la nature du
+# projet. Back4App a vu le `package.json` du front, conclu « application
+# Node », et construit une image sans PHP : le déploiement est mort sur
+# « node: command not found ».
+#
+# Le Dockerfile de DÉVELOPPEMENT reste dans `docker/php/`, où seul
+# `docker-compose.yml` va le chercher, en le nommant explicitement. Aucune
+# confusion possible entre les deux.
+#
 # Différente de celle de développement, et pour de bonnes raisons :
 #
 #   - le code est COPIÉ dans l'image, pas monté. Une image de production doit

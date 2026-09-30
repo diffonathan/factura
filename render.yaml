@@ -23,7 +23,7 @@ services:
   - type: web
     name: factura
     runtime: docker
-    dockerfilePath: ./docker/php/Dockerfile.production
+    dockerfilePath: ./Dockerfile
     region: frankfurt # le plus proche du Maroc parmi les régions gratuites
     plan: free
     healthCheckPath: /up
