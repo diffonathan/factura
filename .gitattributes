@@ -1,11 +1,14 @@
-* text=auto eol=lf
-
-*.blade.php diff=html
-*.css diff=css
-*.html diff=html
-*.md diff=markdown
-*.php diff=php
-
-/.github export-ignore
-CHANGELOG.md export-ignore
-.styleci.yml export-ignore
+# Les scripts shell sont TOUJOURS en fins de ligne Unix, quelle que soit la
+# machine qui les édite.
+#
+# Sans cette règle, un script écrit sous Windows part avec des CRLF. Dans une
+# image Linux, le noyau lit alors la ligne « #!/bin/sh\r » et cherche un
+# interpréteur nommé « /bin/sh\r ». Il répond « not found » — en désignant le
+# SCRIPT, alors que c'est l'INTERPRÉTEUR qui manque. On cherche donc un fichier
+# absent qui est pourtant bien là.
+#
+# C'est arrivé, et l'on ne s'en aperçoit qu'au démarrage du conteneur.
+*.sh text eol=lf
+Dockerfile* text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
