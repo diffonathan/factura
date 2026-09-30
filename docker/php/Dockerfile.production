@@ -77,9 +77,36 @@ RUN php artisan package:discover --ansi \
 COPY docker/php/demarrer.sh /usr/local/bin/demarrer
 RUN chmod +x /usr/local/bin/demarrer
 
-# Render fournit le port à écouter par la variable PORT et ne le connaît pas
-# à l'avance : l'écrire en dur ici rendrait le service injoignable.
-ENV PORT=8000
-EXPOSE 8000
+# Tout ce qui n'est PAS secret est posé ici.
+#
+# La raison est pratique : chaque variable à saisir à la main dans l'interface
+# d'un hébergeur est une occasion de se tromper, et une faute de frappe sur
+# `QUEUE_CONNECTION` ne se voit qu'au moment où une relance ne part pas. Il ne
+# reste donc à saisir que ce qui ne peut pas vivre dans une image publique :
+# la clé de chiffrement, l'adresse de la base, le mot de passe de la
+# documentation, et l'adresse publique du service.
+ENV APP_NAME=Factura \
+    APP_ENV=production \
+    APP_DEBUG=false \
+    DB_CONNECTION=pgsql \
+    LOG_CHANNEL=stderr \
+    # En mémoire plutôt qu'en base : sans processus séparé pour les files
+    # d'attente, un dépôt de sessions en base ferait un aller-retour par
+    # requête pour rien. Contrepartie assumée : un redémarrage déconnecte.
+    SESSION_DRIVER=cookie \
+    CACHE_STORE=file \
+    # L'offre gratuite ne permet pas un second processus : les travaux en file
+    # s'exécutent donc pendant la requête. Le code du travail est inchangé,
+    # seul son mode d'exécution diffère.
+    QUEUE_CONNECTION=sync \
+    # Le serveur intégré de PHP traite UNE requête à la fois : sans ouvriers,
+    # le CSS, le JS et l'icône attendent chacun leur tour.
+    PHP_CLI_SERVER_WORKERS=4
+
+# L'hébergeur impose le port par une variable et ne le connaît pas à l'avance :
+# l'écrire en dur rendrait le service injoignable. 8080 est la valeur par
+# défaut de Zeabur ; Render en donne une autre, et les deux fonctionnent.
+ENV PORT=8080
+EXPOSE 8080
 
 CMD ["demarrer"]
