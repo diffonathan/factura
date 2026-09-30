@@ -1,0 +1,85 @@
+# Déploiement de Factura sur Render (offre gratuite).
+#
+# À importer depuis render.com → New → Blueprint, en pointant ce dépôt. Render
+# lit ce fichier et crée tout ce qu'il décrit.
+#
+# CE QUE L'OFFRE GRATUITE IMPLIQUE, et il vaut mieux le savoir avant :
+#
+#   - le service s'endort après 15 minutes sans visite, et le réveil prend
+#     30 à 50 secondes. Pour une démonstration montrée à un recruteur, c'est
+#     acceptable à condition de le dire ; ce n'est pas acceptable pour un
+#     produit qu'on vend ;
+#   - 512 Mo de mémoire. Laravel y tient largement ;
+#   - la base PostgreSQL gratuite de Render EXPIRE au bout de 30 jours. On
+#     utilise donc une base externe gratuite et permanente (Neon), branchée par
+#     DATABASE_URL. C'est la seule façon d'avoir une démonstration qui marche
+#     encore dans trois mois.
+#
+# Le premier démarrage joue les migrations et le jeu de démonstration. Les
+# suivants ne rejouent que les migrations : `--seed` n'est pas idempotent, et
+# le relancer créerait une seconde entreprise Atlas Numérique à chaque déploiement.
+
+services:
+  - type: web
+    name: factura
+    runtime: docker
+    dockerfilePath: ./docker/php/Dockerfile.production
+    region: frankfurt # le plus proche du Maroc parmi les régions gratuites
+    plan: free
+    healthCheckPath: /up
+    autoDeploy: true
+
+    envVars:
+      - key: APP_NAME
+        value: Factura
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      # Généré par Render au premier déploiement, puis conservé. Le régénérer
+      # invaliderait toutes les sessions ET rendrait illisible tout ce qui a
+      # été chiffré avec l'ancienne clé.
+      - key: APP_KEY
+        generateValue: true
+      - key: APP_URL
+        fromService:
+          type: web
+          name: factura
+          property: host
+
+      - key: DB_CONNECTION
+        value: pgsql
+      # DB_URL, et non DATABASE_URL : c'est la clé que lit `config/database.php`
+      # depuis Laravel 11. Avec le mauvais nom, la configuration retombe
+      # silencieusement sur SQLite, et les migrations échouent sur la première
+      # expression régulière PostgreSQL — vérifié en lançant l'image.
+      #
+      # À renseigner À LA MAIN dans le tableau de bord Render, depuis une base
+      # Neon gratuite (neon.tech). Jamais dans ce fichier : il est public.
+      - key: DB_URL
+        sync: false
+
+      # Le mot de passe de la documentation, saisi dans le tableau de bord.
+      # `sync: false` veut dire « Render ne le lit pas dans ce fichier et ne
+      # l'écrit jamais dedans ».
+      - key: DOCUMENTATION_MOT_DE_PASSE
+        sync: false
+
+      # En mémoire : sans processus séparé pour les files d'attente, la base de
+      # données comme dépôt de sessions ferait un aller-retour par requête pour
+      # rien. Conséquence assumée : un redémarrage déconnecte les visiteurs.
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_STORE
+        value: file
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: LOG_CHANNEL
+        value: stderr
+
+      # Le serveur intégré de PHP traite UNE requête à la fois. Une page qui
+      # demande son CSS, son JS et son icône fait attendre chacun derrière le
+      # précédent, et la lenteur ressemble à celle de l'application alors
+      # qu'elle est dans la file d'attente.
+      - key: PHP_CLI_SERVER_WORKERS
+        value: "4"

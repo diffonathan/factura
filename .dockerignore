@@ -1,0 +1,33 @@
+# Ce qui ne doit JAMAIS entrer dans une image.
+#
+# `COPY . .` copie tout, y compris ce qu'on a pris soin de ne pas versionner.
+# Sans ce fichier, le `.env` du poste — mot de passe de la documentation
+# compris — se retrouvait dans l'image de production, lisible par quiconque
+# obtient l'image. Le `.gitignore` ne protège pas de Docker.
+.env
+.env.*
+!.env.example
+
+# Les dépendances sont installées DANS l'image, pour la bonne plateforme.
+# Celles du poste sont compilées pour Windows et pèsent des centaines de mégas.
+vendor/
+node_modules/
+
+# Les caches du poste référencent des paquets de développement absents de
+# l'image de production. `package:discover` échouait sur « Class
+# Laravel\Pail\PailServiceProvider not found » — le cache disait vrai pour le
+# poste, faux pour l'image.
+bootstrap/cache/*.php
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+public/build/
+
+# Inutile à l'exécution, et volumineux.
+.git/
+.github/
+tests/
+.phpunit.result.cache
+docker-compose.yml
+README.md

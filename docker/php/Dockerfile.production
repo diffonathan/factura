@@ -1,0 +1,85 @@
+# Image de production de Factura.
+#
+# Différente de celle de développement, et pour de bonnes raisons :
+#
+#   - le code est COPIÉ dans l'image, pas monté. Une image de production doit
+#     pouvoir tourner sans le dépôt ;
+#   - les dépendances sont installées sans celles de développement, et
+#     l'autochargement est optimisé ;
+#   - le front est construit ici, dans une étape séparée, pour ne pas
+#     embarquer Node dans l'image finale ;
+#   - opcache ne revalide plus les horodatages : en production le code ne
+#     change pas entre deux démarrages, et vérifier chaque fichier à chaque
+#     requête coûte un appel système pour rien.
+
+# ---------------------------------------------------------------------------
+# Étape 1 — le front
+# ---------------------------------------------------------------------------
+FROM node:22-alpine AS front
+
+WORKDIR /build
+
+# Les manifestes d'abord : tant qu'ils ne changent pas, Docker réutilise la
+# couche d'installation. Copier tout le projet d'emblée réinstallerait les
+# dépendances à chaque modification d'un composant.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY vite.config.js ./
+COPY resources ./resources
+RUN npm run build
+
+# ---------------------------------------------------------------------------
+# Étape 2 — les dépendances PHP
+# ---------------------------------------------------------------------------
+FROM composer:latest AS dependances
+
+WORKDIR /build
+
+COPY composer.json composer.lock ./
+
+# `--no-scripts` : les scripts de Laravel appellent artisan, qui a besoin du
+# code applicatif — absent à ce stade. Ils sont rejoués à l'étape suivante.
+RUN composer install \
+        --no-dev \
+        --no-scripts \
+        --no-interaction \
+        --prefer-dist \
+        --optimize-autoloader
+
+# ---------------------------------------------------------------------------
+# Étape 3 — l'image servie
+# ---------------------------------------------------------------------------
+FROM php:8.4-cli-alpine
+
+# Bibliothèques d'EXÉCUTION d'abord, en-têtes de compilation dans un groupe
+# supprimé seul. L'inverse produit une image qui se construit sans erreur et
+# dont pdo_pgsql refuse de se charger — Laravel répond alors « could not find
+# driver », un message qui ne désigne pas la cause.
+RUN apk add --no-cache libpq icu-libs libzip oniguruma \
+    && apk add --no-cache --virtual .build-deps \
+        postgresql-dev icu-dev libzip-dev oniguruma-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_pgsql intl zip bcmath opcache \
+    && apk del .build-deps
+
+COPY docker/php/php.production.ini /usr/local/etc/php/conf.d/factura.ini
+
+WORKDIR /app
+
+COPY . .
+COPY --from=dependances /build/vendor ./vendor
+COPY --from=front /build/public/build ./public/build
+
+# Les scripts de composer, maintenant que le code est là.
+RUN php artisan package:discover --ansi \
+    && chmod -R 775 storage bootstrap/cache
+
+COPY docker/php/demarrer.sh /usr/local/bin/demarrer
+RUN chmod +x /usr/local/bin/demarrer
+
+# Render fournit le port à écouter par la variable PORT et ne le connaît pas
+# à l'avance : l'écrire en dur ici rendrait le service injoignable.
+ENV PORT=8000
+EXPOSE 8000
+
+CMD ["demarrer"]
