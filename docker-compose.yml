@@ -44,13 +44,12 @@ services:
       # Le code vit sur le poste et n'est que monté : on édite dans son éditeur
       # habituel, le conteneur voit la modification aussitôt.
       - .:/app
-    environment:
-      DB_CONNECTION: pgsql
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_DATABASE: factura
-      DB_USERNAME: factura
-      DB_PASSWORD: factura
+    # Aucune variable DB_* ici, volontairement. Une variable d'environnement
+    # du conteneur écrase tout : le `.env`, le `.env.testing`, et jusqu'aux
+    # valeurs déclarées dans `phpunit.xml`. La suite de tests a tourné une fois
+    # sur la base de DÉVELOPPEMENT à cause de cela — et `RefreshDatabase` l'a
+    # vidée. Le `.env` est la seule source de configuration, et `.env.testing`
+    # peut alors faire son travail.
     mem_limit: 512m
     depends_on:
       postgres:

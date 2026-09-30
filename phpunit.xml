@@ -23,8 +23,22 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!--
+            Les tests tournent sur un VRAI PostgreSQL, pas sur SQLite en
+            mémoire. Ce n'est pas un choix de confort : tout ce que ce projet
+            garantit est écrit en PostgreSQL — colonnes calculées, index
+            partiels, contraintes CHECK, triggers, verrous de ligne. SQLite
+            n'en connaît presque rien et laisserait passer les erreurs que ces
+            tests existent précisément pour attraper. Une suite verte sur une
+            base qui n'est pas celle de la production est pire qu'une suite
+            absente : elle rassure à tort.
+
+            `force` est nécessaire parce que le conteneur définit déjà
+            DB_CONNECTION dans son environnement, et qu'une variable présente
+            gagne sur la valeur déclarée ici.
+        -->
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_DATABASE" value="factura_test" force="true"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
