@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Facturation\Exceptions\ConflitFacturation;
 use App\Facturation\ModePaiement;
 use App\Facturation\ServiceEmission;
 use App\Facturation\ServiceEncaissement;
 use App\Facturation\ServiceRelance;
 use App\Facturation\StatutDocument;
 use App\Facturation\TypeDocument;
+use App\Models\Client;
 use App\Models\Document;
+use App\Models\Ligne;
+use App\Support\EntrepriseCourante;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -86,6 +93,194 @@ final class DocumentController extends Controller
             'types' => self::typesFiltrables(),
             'statuts' => self::statutsFiltrables(),
         ]);
+    }
+
+    /**
+     * Le formulaire de création.
+     *
+     * Les clients sont chargés ici plutôt que cherchés à la frappe : une TPE
+     * en a quelques dizaines, une liste déroulante suffit, et elle montre
+     * d'emblée ceux dont l'ICE manque — l'information qui bloquera l'émission.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('Documents/Creer', [
+            'clients' => Client::orderBy('nom')->get()->map(fn (Client $client) => [
+                'id' => $client->id,
+                'nom' => $client->nom,
+                'ville' => $client->ville,
+                'delai' => $client->delai_paiement_jours,
+                'iceManquant' => $client->iceManquant(),
+            ])->all(),
+            'types' => self::typesFiltrables(),
+            'tauxTva' => [20, 14, 10, 7, 0],
+            'aujourdhui' => now()->toDateString(),
+        ]);
+    }
+
+    /**
+     * Crée un BROUILLON, avec ses lignes s'il en a déjà.
+     *
+     * Toujours un brouillon, jamais un document émis : créer et émettre sont
+     * deux gestes distincts parce que le second est irréversible. Émettre à la
+     * saisie consommerait un numéro de la série légale à chaque essai.
+     */
+    public function store(Request $requete, ServiceEmission $emission): RedirectResponse
+    {
+        $donnees = $this->validerDocument($requete, avecLignes: true);
+
+        $document = DB::transaction(function () use ($donnees): Document {
+            $document = Document::create(Arr::except($donnees, 'lignes'));
+
+            foreach ($donnees['lignes'] ?? [] as $ligne) {
+                Ligne::creerPour($document, $ligne);
+            }
+
+            return $document->refresh();
+        });
+
+        // « Créer et émettre » en un geste, pour la saisie courante : on relit
+        // rarement une facture de trois lignes qu'on vient de taper.
+        if ($requete->boolean('emettre')) {
+            $emis = $emission->emettre($document);
+
+            return redirect()
+                ->route('documents.show', $emis)
+                ->with('succes', "{$emis->type->libelle()} {$emis->reference} émis.");
+        }
+
+        return redirect()
+            ->route('documents.show', $document)
+            ->with('succes', 'Brouillon créé. Relisez-le, puis émettez-le.');
+    }
+
+    /** Modifie l'en-tête d'un brouillon. */
+    public function update(Request $requete, Document $document): RedirectResponse
+    {
+        $this->refuserSiEmis($document);
+
+        $document->update($this->validerDocument($requete, avecLignes: false, avecType: false));
+
+        return back()->with('succes', 'Brouillon mis à jour.');
+    }
+
+    public function destroy(Document $document): RedirectResponse
+    {
+        $this->refuserSiEmis($document);
+
+        $document->delete();
+
+        return redirect()
+            ->route('documents.index')
+            ->with('succes', 'Brouillon supprimé.');
+    }
+
+    // ------------------------------------------------------------------
+    // Les lignes d'un brouillon
+    // ------------------------------------------------------------------
+
+    public function ajouterLigne(Request $requete, Document $document): RedirectResponse
+    {
+        $this->refuserSiEmis($document);
+
+        Ligne::creerPour($document, $requete->validate($this->reglesLigne()));
+
+        return back()->with('succes', 'Ligne ajoutée.');
+    }
+
+    public function modifierLigne(Request $requete, Document $document, Ligne $ligne): RedirectResponse
+    {
+        $this->refuserSiEmis($document);
+        $this->refuserSiEtrangere($document, $ligne);
+
+        $ligne->update($requete->validate($this->reglesLigne()));
+
+        return back()->with('succes', 'Ligne modifiée.');
+    }
+
+    public function supprimerLigne(Document $document, Ligne $ligne): RedirectResponse
+    {
+        $this->refuserSiEmis($document);
+        $this->refuserSiEtrangere($document, $ligne);
+
+        $ligne->delete();
+
+        return back()->with('succes', 'Ligne supprimée.');
+    }
+
+    // ------------------------------------------------------------------
+
+    /** @return array<string, mixed> */
+    private function validerDocument(Request $requete, bool $avecLignes, bool $avecType = true): array
+    {
+        $entrepriseId = app(EntrepriseCourante::class)->idObligatoire();
+
+        $regles = [
+            // Le client doit appartenir À CETTE entreprise. Un simple
+            // `exists:clients,id` laisserait facturer au nom du client d'une
+            // autre société en changeant un identifiant dans la requête.
+            'client_id' => [
+                'required',
+                Rule::exists('clients', 'id')->where('entreprise_id', $entrepriseId),
+            ],
+            'date_emission' => ['required', 'date'],
+            'date_echeance' => ['nullable', 'date', 'after_or_equal:date_emission'],
+            'objet' => ['nullable', 'string', 'max:200'],
+            'conditions' => ['nullable', 'string', 'max:2000'],
+            'notes_internes' => ['nullable', 'string', 'max:2000'],
+        ];
+
+        if ($avecType) {
+            $regles['type'] = ['required', Rule::enum(TypeDocument::class)];
+        }
+
+        if ($avecLignes) {
+            $regles['lignes'] = ['array'];
+
+            foreach ($this->reglesLigne() as $champ => $contraintes) {
+                $regles["lignes.*.{$champ}"] = $contraintes;
+            }
+        }
+
+        return $requete->validate($regles);
+    }
+
+    /** @return array<string, list<mixed>> */
+    private function reglesLigne(): array
+    {
+        return [
+            'designation' => ['required', 'string', 'max:255'],
+            'unite' => ['nullable', 'string', 'max:16'],
+            'quantite' => ['required', 'numeric', 'gt:0'],
+            'prix_unitaire_ht' => ['required', 'numeric', 'min:0'],
+            'remise_pct' => ['nullable', 'numeric', 'between:0,100'],
+
+            // Les cinq taux marocains, et rien d'autre. La base pose la même
+            // contrainte ; la répéter ici sert seulement à rendre un message
+            // de formulaire plutôt qu'une erreur de base de données.
+            'taux_tva' => ['required', 'numeric', Rule::in([0, 7, 10, 14, 20])],
+        ];
+    }
+
+    /**
+     * La base refuserait de toute façon — triggers `documents_immuables` et
+     * `lignes_figees`. On vérifie ici pour rendre un message lisible, pas pour
+     * remplacer la garantie.
+     */
+    private function refuserSiEmis(Document $document): void
+    {
+        if ($document->estEmis()) {
+            throw new ConflitFacturation(
+                "Le document {$document->reference} est émis : il se corrige par un avoir."
+            );
+        }
+    }
+
+    /** Une ligne appartient à son document. L'identifiant d'une ligne d'un
+     *  autre document glissé dans l'URL ne doit rien pouvoir modifier. */
+    private function refuserSiEtrangere(Document $document, Ligne $ligne): void
+    {
+        abort_unless($ligne->document_id === $document->id, 404);
     }
 
     public function show(Document $document, ServiceRelance $relances): Response

@@ -51,6 +51,10 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
                 devis, factures et avoirs
             </p>
         </div>
+
+        <Link href="/documents/nouveau" class="bouton-accent rounded-lg px-4 py-2 text-[13px]">
+            Nouveau document
+        </Link>
     </div>
 
     <div class="mt-6 flex flex-wrap items-center gap-3">
@@ -63,7 +67,6 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
 
         <select
             :value="filtres.type"
-            class="champ rounded-lg px-3 py-2 text-sm"
             @change="filtrer({ type: $event.target.value })"
         >
             <option value="">Tous les types</option>
@@ -72,7 +75,6 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
 
         <select
             :value="filtres.statut"
-            class="champ rounded-lg px-3 py-2 text-sm"
             @change="filtrer({ statut: $event.target.value })"
         >
             <option value="">Tous les états</option>

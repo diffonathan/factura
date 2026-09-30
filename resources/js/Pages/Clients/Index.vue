@@ -38,12 +38,17 @@ watch(terme, (valeur) => {
             </p>
         </div>
 
-        <input
-            v-model="terme"
-            type="search"
-            placeholder="Nom, ICE ou ville…"
-            class="champ w-64 rounded-lg px-3 py-2 text-sm"
-        >
+        <div class="flex items-center gap-3">
+            <input
+                v-model="terme"
+                type="search"
+                placeholder="Nom, ICE ou ville…"
+                class="champ w-64 rounded-lg px-3 py-2 text-sm"
+            >
+            <Link href="/clients/nouveau" class="bouton-accent rounded-lg px-4 py-2 text-[13px]">
+                Nouveau client
+            </Link>
+        </div>
     </div>
 
     <section class="mt-5 overflow-hidden verre rounded-2xl">

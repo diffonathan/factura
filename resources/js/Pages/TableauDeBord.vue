@@ -78,6 +78,7 @@ const NIVEAUX = { 1: 'Rappel courtois', 2: 'Relance ferme', 3: 'Mise en demeure'
                 TVA collectée <span class="nombre">{{ montant(chiffres.tva_collectee) }}</span> MAD
             </p>
         </div>
+        <div class="flex items-center gap-3">
         <Link
             v-if="chiffres.brouillons > 0"
             href="/documents?statut=BROUILLON"
@@ -85,6 +86,11 @@ const NIVEAUX = { 1: 'Rappel courtois', 2: 'Relance ferme', 3: 'Mise en demeure'
         >
             {{ chiffres.brouillons }} brouillon{{ chiffres.brouillons > 1 ? 's' : '' }} en attente
         </Link>
+
+        <Link href="/documents/nouveau" class="bouton-accent rounded-lg px-4 py-2 text-[13px]">
+            Nouvelle facture
+        </Link>
+        </div>
     </div>
 
     <section data-visite="chiffres" class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

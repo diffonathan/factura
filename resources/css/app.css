@@ -219,7 +219,11 @@
     /* Les champs de saisie. Fond plus sombre que la carte qui les porte :
        un champ doit se lire comme un creux, pas comme une carte de plus. */
     .champ {
-        background: rgba(0, 0, 0, 0.28);
+        /* `background-color` et non `background` : le raccourci écraserait le
+           `background-image` qui porte le chevron des listes déroulantes, tout
+           en laissant le vide réservé à droite. Le contrôle paraîtrait cassé,
+           et `appearance: none` empêche le navigateur d'en redessiner un. */
+        background-color: rgba(0, 0, 0, 0.28);
         border: 1px solid var(--color-bordure-vive);
         color: var(--color-texte);
         transition: border-color 160ms ease, box-shadow 160ms ease;
@@ -231,6 +235,60 @@
         outline: none;
         border-color: var(--color-accent);
         box-shadow: 0 0 0 3px var(--color-accent-doux);
+    }
+
+    /*
+        ═══════════════════════════════════════════════════════════════════
+        Les listes déroulantes
+        ═══════════════════════════════════════════════════════════════════
+
+        Une règle GLOBALE, et les composants ne posent que leur taille. C'est
+        la seule façon d'éviter qu'une liste sur deux finisse habillée
+        autrement.
+
+        Le point qu'on oublie toujours : le panneau qui s'ouvre n'est PAS
+        dessiné par le CSS de la page, c'est le système qui le peint. Seuls
+        `option` et `optgroup` l'atteignent — et en couleurs LITTÉRALES, parce
+        que les `var()` n'y sont pas résolues partout. D'où les hexadécimaux
+        en dur ci-dessous : ce n'est pas un oubli de jeton, c'est la condition
+        pour que le déroulé soit sombre lui aussi.
+
+        `color-scheme: dark` sur `html` fait le reste : il indique au système
+        que l'interface est sombre, ce qui habille la barre de défilement du
+        panneau et la surbrillance de l'option survolée.
+    */
+    select:not([multiple]) {
+        appearance: none;
+        -webkit-appearance: none;
+        background-color: rgba(0, 0, 0, 0.28);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238b8b93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6.5l4 4 4-4'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 15px;
+        border: 1px solid var(--color-bordure-vive);
+        border-radius: 0.5rem;
+        color: var(--color-texte);
+        /* Le padding COMPLET appartient à cette règle, pas au composant.
+           Mesuré : une classe `px-3` posée à côté écrase le `padding-right` et
+           reprend la place réservée au chevron — une option longue passe alors
+           sous la flèche. Les composants ne posent donc ni `px-`, ni `py-` sur
+           un select ; seulement sa largeur s'ils en ont besoin. */
+        padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    select:not([multiple]):focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-doux);
+    }
+
+    select option,
+    select optgroup {
+        background-color: #0e0e11;
+        color: #f4f4f5;
     }
 
     /* Les pastilles d'état. Trois rôles, trois traitements. */

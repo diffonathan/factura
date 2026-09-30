@@ -32,6 +32,49 @@ const encaissable = computed(
         && Number.parseFloat(props.document.reste) > 0,
 )
 
+const nouvelleLigne = ref({ designation: '', quantite: 1, prix_unitaire_ht: '', taux_tva: 20 })
+
+/**
+ * Envoie UNE ligne modifiée.
+ *
+ * On repart des valeurs actuelles et on n'écrase que le champ touché : le
+ * serveur valide la ligne entière, donc envoyer le seul champ modifié la
+ * ferait refuser pour les autres, manquants.
+ */
+function modifierLigne(ligne, champ, valeur) {
+    router.patch(`/documents/${props.document.id}/lignes/${ligne.id}`, {
+        designation: ligne.designation,
+        unite: ligne.unite,
+        quantite: ligne.quantite,
+        prix_unitaire_ht: ligne.prix,
+        remise_pct: ligne.remise,
+        taux_tva: ligne.taux,
+        [champ]: valeur,
+    }, { preserveScroll: true })
+}
+
+function supprimerLigne(ligne) {
+    router.delete(`/documents/${props.document.id}/lignes/${ligne.id}`, { preserveScroll: true })
+}
+
+function ajouterLigne() {
+    router.post(`/documents/${props.document.id}/lignes`, nouvelleLigne.value, {
+        preserveScroll: true,
+        onSuccess: () => {
+            nouvelleLigne.value = { designation: '', quantite: 1, prix_unitaire_ht: '', taux_tva: 20 }
+        },
+    })
+}
+
+function supprimerBrouillon() {
+    // Une confirmation, parce que la suppression est définitive — mais
+    // seulement ici : un brouillon ne laisse pas de trou dans la série, donc
+    // ce n'est pas un geste grave, juste un geste irréversible.
+    if (!window.confirm('Supprimer ce brouillon ? Il n’a pas de numéro, la série n’en gardera aucune trace.')) return
+
+    router.delete(`/documents/${props.document.id}`)
+}
+
 function agir(chemin) {
     router.post(`/documents/${props.document.id}/${chemin}`, {}, { preserveScroll: true })
 }
@@ -77,6 +120,15 @@ const TITRE_TAUX = { '0.00': 'Exonéré', '7.00': '7 %', '10.00': '10 %', '14.00
                 @click="agir('emettre')"
             >
                 Émettre ce {{ document.type_libelle.toLowerCase() }}
+            </button>
+
+            <button
+                v-if="document.est_brouillon"
+                type="button"
+                class="bouton-discret rounded-lg px-4 py-2 text-[13px] font-semibold"
+                @click="supprimerBrouillon"
+            >
+                Supprimer
             </button>
 
             <button
@@ -130,7 +182,7 @@ const TITRE_TAUX = { '0.00': 'Exonéré', '7.00': '7 %', '10.00': '10 %', '14.00
             <span class="text-[13px] font-medium">Mode</span>
             <select
                 v-model="encaissement.mode"
-                class="champ mt-1.5 w-full rounded-lg px-3 py-2 text-sm"
+                class="mt-1.5 w-full"
             >
                 <option v-for="mode in modesPaiement" :key="mode.valeur" :value="mode.valeur">
                     {{ mode.libelle }}
@@ -244,6 +296,65 @@ const TITRE_TAUX = { '0.00': 'Exonéré', '7.00': '7 %', '10.00': '10 %', '14.00
                     </tr>
                 </tbody>
             </table>
+
+            <!--
+                L'édition des lignes, réservée au brouillon.
+
+                Pas de bouton « Enregistrer » global : chaque ligne part à la
+                perte du focus. Un formulaire long avec un seul bouton final
+                perd tout au moindre incident, et l'utilisateur ne sait jamais
+                ce qui a été pris en compte.
+            -->
+            <div v-if="document.est_brouillon" class="mt-5 space-y-3 rounded-xl border border-bordure p-4">
+                <p class="text-[13px] font-semibold">Modifier les lignes</p>
+
+                <div v-for="ligne in lignes" :key="`edit-${ligne.id}`" class="grid gap-2 sm:grid-cols-12">
+                    <input
+                        :value="ligne.designation" type="text" placeholder="Désignation"
+                        class="champ rounded-lg px-2 py-1.5 text-sm sm:col-span-5"
+                        @change="modifierLigne(ligne, 'designation', $event.target.value)"
+                    >
+                    <input
+                        :value="Number.parseFloat(ligne.quantite)" type="number" step="0.001" min="0.001"
+                        class="champ nombre rounded-lg px-2 py-1.5 text-sm sm:col-span-2"
+                        @change="modifierLigne(ligne, 'quantite', $event.target.value)"
+                    >
+                    <input
+                        :value="Number.parseFloat(ligne.prix)" type="number" step="0.01" min="0"
+                        class="champ nombre rounded-lg px-2 py-1.5 text-sm sm:col-span-2"
+                        @change="modifierLigne(ligne, 'prix_unitaire_ht', $event.target.value)"
+                    >
+                    <select
+                        :value="Number.parseFloat(ligne.taux)" class="sm:col-span-2"
+                        @change="modifierLigne(ligne, 'taux_tva', $event.target.value)"
+                    >
+                        <option v-for="taux in [20, 14, 10, 7, 0]" :key="taux" :value="taux">
+                            {{ taux === 0 ? 'Exonéré' : `${taux} %` }}
+                        </option>
+                    </select>
+                    <button
+                        type="button"
+                        class="rounded-lg text-xs text-texte-doux hover:text-perte sm:col-span-1"
+                        @click="supprimerLigne(ligne)"
+                    >
+                        Retirer
+                    </button>
+                </div>
+
+                <form class="grid gap-2 border-t border-bordure pt-3 sm:grid-cols-12" @submit.prevent="ajouterLigne">
+                    <input v-model="nouvelleLigne.designation" type="text" required placeholder="Ajouter une ligne…" class="champ rounded-lg px-2 py-1.5 text-sm sm:col-span-5">
+                    <input v-model="nouvelleLigne.quantite" type="number" step="0.001" min="0.001" class="champ nombre rounded-lg px-2 py-1.5 text-sm sm:col-span-2">
+                    <input v-model="nouvelleLigne.prix_unitaire_ht" type="number" step="0.01" min="0" required placeholder="Prix HT" class="champ nombre rounded-lg px-2 py-1.5 text-sm sm:col-span-2">
+                    <select v-model="nouvelleLigne.taux_tva" class="sm:col-span-2">
+                        <option v-for="taux in [20, 14, 10, 7, 0]" :key="taux" :value="taux">
+                            {{ taux === 0 ? 'Exonéré' : `${taux} %` }}
+                        </option>
+                    </select>
+                    <button type="submit" class="bouton-discret rounded-lg text-xs font-semibold sm:col-span-1">
+                        Ajouter
+                    </button>
+                </form>
+            </div>
 
             <div class="mt-6 flex justify-end">
                 <dl class="w-64 space-y-1.5 text-sm">

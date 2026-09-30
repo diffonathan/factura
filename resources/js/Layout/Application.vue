@@ -138,11 +138,16 @@ onMounted(() => {
         <VisiteGuidee :ouverte="visiteOuverte" @fermer="visiteOuverte = false" />
 
         <footer class="mx-auto max-w-7xl px-6 pb-10 pt-4">
-            <p class="border-t border-bordure pt-5 text-xs leading-relaxed text-texte-doux">
-                Projet de démonstration — les entreprises et les clients sont inventés.
-                La numérotation, les mentions légales et les taux de TVA suivent la
-                réglementation marocaine.
-            </p>
+            <div class="flex flex-wrap items-baseline justify-between gap-3 border-t border-bordure pt-5">
+                <p class="max-w-2xl text-xs leading-relaxed text-texte-doux">
+                    Projet de démonstration — les entreprises et les clients sont inventés.
+                    La numérotation, les mentions légales et les taux de TVA suivent la
+                    réglementation marocaine.
+                </p>
+                <a href="/documentation" class="shrink-0 text-xs font-semibold text-accent hover:underline">
+                    Documentation technique →
+                </a>
+            </div>
         </footer>
     </div>
 </template>
