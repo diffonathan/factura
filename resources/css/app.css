@@ -4,49 +4,272 @@
 @source '../../storage/framework/views/*.php';
 
 /*
-    La charte de Factura.
-    ---------------------
-    Une application de facturation se lit, elle ne s'admire pas : on y cherche
-    un montant, une date, un reste dû. D'où un fond papier plutôt que blanc
-    pur, une encre très sombre mais pas noire, et UNE seule couleur d'accent.
+    ═══════════════════════════════════════════════════════════════════════
+    Factura — charte maison, palette 08 « Or antique » (#d4a017)
+    ═══════════════════════════════════════════════════════════════════════
 
-    Le vert profond n'est pas décoratif : il ne sert qu'à ce qui est rentré en
-    caisse. L'ambre signale l'échéance qui approche, le rouge brique l'impayé.
-    Trois couleurs, trois significations, jamais interchangées — un utilisateur
-    doit pouvoir lire l'état d'une facture sans lire le texte.
+    Prise dans les 24 palettes de `Projet/charte/CHARTE-24-PALETTES.md`, et
+    non inventée. Le système est le même que ConfluenceTerminal et Hope
+    Traders — nuit seule, glassmorphism, Azeret Mono pour les nombres — seul
+    l'accent change. C'est ce qui fait lire les projets comme une série plutôt
+    que comme des travaux sans rapport.
 
-    Les nombres sont en fonte à espacement fixe. Dans une colonne de montants,
-    une fonte proportionnelle décale les chiffres d'une ligne à l'autre et
-    empêche de comparer deux totaux d'un coup d'œil.
+    POURQUOI L'OR ANTIQUE ICI
+    L'or est la couleur de l'argent, et cette application ne parle que de ça.
+    Il évoque aussi le laiton et l'ocre marocains, ce qui ancre le produit là
+    où il est vendu. Hope Traders porte le bleu FTMO, RDV Santé le vert Hope :
+    deux projets ne portent jamais la même palette.
+
+    LES QUATRE RÔLES, JAMAIS INTERCHANGÉS
+      accent (or)  → action : boutons, liens, états actifs, marque
+      gain (vert)  → ce qui est rentré : encaissé, soldé
+      perte (rouge)→ ce qui manque : impayé, retard, refus
+      neutre       → en cours, sans jugement
+
+    Attention : l'ambre servait d'ordinaire à signaler l'échéance. Avec l'or en
+    accent, cette valeur est prise — un badge ambre se confondrait avec un
+    bouton. « Échéance à venir » est donc NEUTRE, et seul le dépassement est
+    rouge. Un thème ne doit jamais rendre deux choses semblables.
 */
+
 @theme {
     --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-    --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', monospace;
+    --font-mono: 'Azeret Mono', ui-monospace, 'SFMono-Regular', monospace;
 
-    --color-papier: #fbfaf7;
-    --color-papier-creux: #f4f2ed;
-    --color-encre: #14201c;
-    --color-encre-douce: #5d6b66;
-    --color-trait: #e5e2da;
+    /* Le socle nuit. Jamais de thème clair : la charte n'en a pas. */
+    --color-fond: #060607;
+    --color-surface: #0e0e11;
+    --color-surface-haute: #16161a;
 
-    --color-caisse: #0f7b45;
-    --color-caisse-clair: #e8f3ec;
-    --color-echeance: #b45309;
-    --color-echeance-clair: #fdf3e7;
-    --color-impaye: #a8321f;
-    --color-impaye-clair: #fbeeeb;
+    --color-texte: #f4f4f5;
+    --color-texte-doux: #8b8b93;
+    --color-texte-faible: #5b5b63;
+
+    --color-bordure: #232329;
+    --color-bordure-vive: #33333c;
+
+    /* L'accent et ses dérivés, calculés selon la recette de la charte :
+       -18 % de noir pour la version sombre, mélanges pour le dégradé. */
+    --color-accent: #d4a017;
+    --color-accent-dim: #ae8313;
+    --color-accent-clair: #e4bd5c;
+    --color-accent-doux: rgba(212, 160, 23, 0.10);
+    --color-accent-bordure: rgba(212, 160, 23, 0.30);
+
+    /* Les deux directions. Elles ne suivent PAS le thème : vert = gain et
+       rouge = perte sont un langage universel, qu'un changement de palette
+       n'a pas à réécrire. */
+    --color-gain: #10b981;
+    --color-gain-doux: rgba(16, 185, 129, 0.12);
+    --color-perte: #e23d3d;
+    --color-perte-doux: rgba(226, 61, 61, 0.12);
 }
 
 @layer base {
-    body {
-        background-color: var(--color-papier);
-        color: var(--color-encre);
+    html {
+        color-scheme: dark;
     }
 
-    /* Les montants et les références : toujours en chiffres alignés. */
+    body {
+        background-color: var(--color-fond);
+        color: var(--color-texte);
+        /* L'interface est dense : un tracking légèrement négatif la resserre
+           sans la rendre illisible. */
+        letter-spacing: -0.011em;
+    }
+
+    /*
+        Le fond en profondeur, recette exacte de la charte : trois halos de
+        l'accent posés sur un dégradé nuit. Fixe, en `::before`, donc il ne
+        défile pas avec le contenu — sinon les halos « glisseraient » et le
+        fond aurait l'air d'un décor collé.
+    */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+            radial-gradient(680px 680px at 10% 4%, rgba(212, 160, 23, 0.12), transparent 60%),
+            radial-gradient(760px 760px at 92% 96%, rgba(212, 160, 23, 0.06), transparent 60%),
+            radial-gradient(560px 560px at 68% 30%, rgba(212, 160, 23, 0.05), transparent 62%),
+            radial-gradient(120% 85% at 50% 0%, #141417 0%, #0b0b0d 55%, #060607 100%);
+    }
+
+    /* Les nombres, toujours. Dans une colonne de montants, une fonte
+       proportionnelle décale les chiffres d'une ligne à l'autre et empêche de
+       comparer deux totaux d'un coup d'œil. */
     .nombre {
         font-family: var(--font-mono);
         font-variant-numeric: tabular-nums;
-        letter-spacing: -0.01em;
+        letter-spacing: -0.02em;
+    }
+
+    ::selection {
+        background: var(--color-accent);
+        color: #0a0a0c;
+    }
+
+    /* Une barre de défilement qui ne casse pas le fond sombre. */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: var(--color-bordure-vive);
+        border-radius: 999px;
+        border: 2px solid var(--color-fond);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #44444f; }
+}
+
+@layer components {
+    /*
+        Le verre — recette exacte de la charte.
+
+        Quatre couches, et chacune compte : le fond translucide laisse passer
+        les halos, le flou les diffuse, la bordure fine détache la carte, et le
+        liseré interne haut (`inset 0 1px 0`) simule une arête éclairée par le
+        dessus. C'est ce dernier trait, presque invisible, qui donne
+        l'impression d'une matière plutôt que d'un rectangle gris.
+    */
+    .verre {
+        background: rgba(255, 255, 255, 0.032);
+        backdrop-filter: blur(12px) saturate(140%);
+        -webkit-backdrop-filter: blur(12px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.075);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.055),
+            0 8px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .verre-haut {
+        background: rgba(255, 255, 255, 0.055);
+        backdrop-filter: blur(14px) saturate(150%);
+        -webkit-backdrop-filter: blur(14px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.07),
+            0 16px 44px rgba(0, 0, 0, 0.5);
+    }
+
+    /*
+        Le verre d'une MODALE, et pourquoi il diffère.
+
+        Une carte de verre posée sur la page emprunte sa lisibilité au fond
+        qu'elle recouvre. Une modale, elle, flotte au-dessus d'un voile déjà
+        sombre ET d'un contenu encore visible : à 5 % d'opacité, son texte se
+        mélange aux chiffres du tableau de bord et devient illisible — constaté
+        à l'écran, pas supposé.
+
+        On garde donc toute la matière du verre — le flou, la bordure fine, le
+        liseré interne haut — mais sur un fond presque opaque. Le flou continue
+        de travailler sur les bords et sur le halo du fond, là où il se voit,
+        sans coûter la lecture.
+    */
+    .verre-modale {
+        background: rgba(14, 14, 17, 0.965);
+        backdrop-filter: blur(20px) saturate(140%);
+        -webkit-backdrop-filter: blur(20px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.11);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.07),
+            0 24px 60px rgba(0, 0, 0, 0.7);
+    }
+
+    .verre-interactif {
+        transition: border-color 200ms cubic-bezier(0.22, 1, 0.36, 1),
+                    background-color 200ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .verre-interactif:hover {
+        background: rgba(255, 255, 255, 0.055);
+        border-color: var(--color-accent-bordure);
+    }
+
+    /* Le bouton d'action principal. Dégradé de l'accent, selon la recette :
+       +45 % de blanc vers -22 % de noir, incliné à -15°. */
+    .bouton-accent {
+        background: linear-gradient(-15deg, #e4bd5c, #a67e12);
+        color: #14100a;
+        font-weight: 600;
+        box-shadow: 0 6px 20px rgba(212, 160, 23, 0.22);
+        transition: transform 180ms cubic-bezier(0.22, 1, 0.36, 1),
+                    box-shadow 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .bouton-accent:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 28px rgba(212, 160, 23, 0.3);
+    }
+
+    .bouton-accent:active { transform: translateY(0); }
+
+    .bouton-discret {
+        border: 1px solid var(--color-bordure-vive);
+        color: var(--color-texte-doux);
+        transition: border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+                    color 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .bouton-discret:hover {
+        border-color: var(--color-accent-bordure);
+        color: var(--color-texte);
+    }
+
+    /* Les champs de saisie. Fond plus sombre que la carte qui les porte :
+       un champ doit se lire comme un creux, pas comme une carte de plus. */
+    .champ {
+        background: rgba(0, 0, 0, 0.28);
+        border: 1px solid var(--color-bordure-vive);
+        color: var(--color-texte);
+        transition: border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .champ::placeholder { color: var(--color-texte-faible); }
+
+    .champ:focus {
+        outline: none;
+        border-color: var(--color-accent);
+        box-shadow: 0 0 0 3px var(--color-accent-doux);
+    }
+
+    /* Les pastilles d'état. Trois rôles, trois traitements. */
+    .pastille {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 6px;
+        padding: 0.2rem 0.5rem;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .pastille-gain { background: var(--color-gain-doux); color: var(--color-gain); }
+    .pastille-perte { background: var(--color-perte-doux); color: var(--color-perte); }
+    .pastille-accent { background: var(--color-accent-doux); color: var(--color-accent-clair); }
+    .pastille-neutre { background: rgba(255, 255, 255, 0.06); color: var(--color-texte-doux); }
+}
+
+@layer utilities {
+    /* La révélation au défilement, courbe signature de la charte. */
+    @keyframes apparition {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: none; }
+    }
+
+    .apparait {
+        animation: apparition 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    /* Respecter le réglage système : une animation imposée à quelqu'un qui
+       souffre du mouvement n'est pas une finition, c'est une gêne. */
+    @media (prefers-reduced-motion: reduce) {
+        .apparait { animation: none; }
+        .bouton-accent:hover { transform: none; }
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
     }
 }

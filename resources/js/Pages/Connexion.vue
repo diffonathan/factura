@@ -1,5 +1,6 @@
 <script setup>
 import { Head, useForm } from '@inertiajs/vue3'
+import Marque from '../Marque.vue'
 
 const formulaire = useForm({
     email: 'demo@factura.ma',
@@ -24,17 +25,19 @@ function envoyer() {
         <!-- Le volet de gauche dit ce que fait le produit. Un écran de
              connexion nu ne renseigne personne, et c'est souvent la première
              page qu'un visiteur voit. -->
-        <section class="hidden flex-col justify-between bg-encre p-12 text-papier lg:flex">
+        <section class="hidden flex-col justify-between bg-surface-haute p-12 text-texte lg:flex">
             <div class="flex items-center gap-2.5">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-caisse text-sm font-bold text-white">Fa</span>
-                <span class="text-base font-semibold tracking-tight">Factura</span>
+                <Marque :taille="36" />
+                <span class="text-base font-semibold tracking-tight">
+                    Fact<span class="text-accent">ura</span>
+                </span>
             </div>
 
             <div class="max-w-md">
                 <h1 class="text-[2.1rem] font-semibold leading-[1.15] tracking-tight">
                     La facturation des TPE marocaines, sans les trous de numérotation.
                 </h1>
-                <p class="mt-5 text-[15px] leading-relaxed text-papier/65">
+                <p class="mt-5 text-[15px] leading-relaxed text-texte-doux">
                     Une très petite entreprise facture encore sous Word ou Excel.
                     Toujours les mêmes conséquences : une numérotation qui saute,
                     des mentions légales oubliées, des impayés que personne ne relance.
@@ -45,14 +48,14 @@ function envoyer() {
                         ['Numérotation continue', 'Le numéro est réservé en base, dans la même transaction que la facture. Un échec ne consomme rien.'],
                         ['Documents figés', 'Une facture émise ne se réécrit pas. On la corrige par un avoir — c\'est la loi, et la piste reste vérifiable.'],
                         ['Relances automatiques', 'Trois niveaux selon le retard, et jamais deux fois le même courrier.'],
-                    ]" :key="point[0]" class="border-l-2 border-caisse pl-4">
+                    ]" :key="point[0]" class="border-l-2 border-accent pl-4">
                         <dt class="text-sm font-semibold">{{ point[0] }}</dt>
-                        <dd class="mt-1 text-[13px] leading-relaxed text-papier/55">{{ point[1] }}</dd>
+                        <dd class="mt-1 text-[13px] leading-relaxed text-texte-doux">{{ point[1] }}</dd>
                     </div>
                 </dl>
             </div>
 
-            <p class="text-xs text-papier/40">
+            <p class="text-xs text-texte-faible">
                 Projet de démonstration — Laravel 13, Inertia, Vue 3, PostgreSQL.
             </p>
         </section>
@@ -60,7 +63,7 @@ function envoyer() {
         <section class="flex items-center justify-center px-6 py-16">
             <div class="w-full max-w-sm">
                 <h2 class="text-2xl font-semibold tracking-tight">Connexion</h2>
-                <p class="mt-2 text-sm text-encre-douce">
+                <p class="mt-2 text-sm text-texte-doux">
                     Les identifiants de démonstration sont déjà saisis.
                 </p>
 
@@ -73,9 +76,9 @@ function envoyer() {
                             type="email"
                             autocomplete="username"
                             required
-                            class="mt-1.5 w-full rounded-lg border border-trait bg-white px-3 py-2.5 text-sm outline-none transition-colors focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+                            class="champ mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm"
                         >
-                        <p v-if="formulaire.errors.email" class="mt-1.5 text-[13px] text-impaye">
+                        <p v-if="formulaire.errors.email" class="mt-1.5 text-[13px] text-perte">
                             {{ formulaire.errors.email }}
                         </p>
                     </div>
@@ -88,15 +91,15 @@ function envoyer() {
                             type="password"
                             autocomplete="current-password"
                             required
-                            class="mt-1.5 w-full rounded-lg border border-trait bg-white px-3 py-2.5 text-sm outline-none transition-colors focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+                            class="champ mt-1.5 w-full rounded-lg px-3 py-2.5 text-sm"
                         >
                     </div>
 
-                    <label class="flex items-center gap-2 text-[13px] text-encre-douce">
+                    <label class="flex items-center gap-2 text-[13px] text-texte-doux">
                         <input
                             v-model="formulaire.se_souvenir"
                             type="checkbox"
-                            class="h-4 w-4 rounded border-trait text-caisse focus:ring-caisse/30"
+                            class="h-4 w-4 rounded border-bordure text-accent focus:ring-accent-doux"
                         >
                         Rester connecté
                     </label>
@@ -104,14 +107,14 @@ function envoyer() {
                     <button
                         type="submit"
                         :disabled="formulaire.processing"
-                        class="w-full rounded-lg bg-caisse px-4 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                        class="bouton-accent w-full rounded-lg px-4 py-2.5 text-sm disabled:opacity-50"
                     >
                         {{ formulaire.processing ? 'Connexion…' : 'Se connecter' }}
                     </button>
                 </form>
 
-                <p class="mt-8 rounded-lg bg-papier-creux px-4 py-3 text-[13px] leading-relaxed text-encre-douce">
-                    <span class="font-medium text-encre">Comptes de démonstration</span><br>
+                <p class="mt-8 rounded-lg bg-surface px-4 py-3 text-[13px] leading-relaxed text-texte-doux">
+                    <span class="font-medium text-texte">Comptes de démonstration</span><br>
                     demo@factura.ma — propriétaire<br>
                     comptable@factura.ma — comptable<br>
                     Mot de passe : <span class="nombre">demonstration</span>

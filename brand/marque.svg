@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Factura — la marque seule (pastille).
+
+    Le signe est un REÇU : rectangle à coin arrondi, bord inférieur dentelé
+    comme un ticket détaché, trois lignes à l'intérieur dont la dernière plus
+    courte — le total. C'est la silhouette qu'on reconnaît sans lire, et c'est
+    le seul critère qui compte pour une marque affichée à 16 pixels dans un
+    onglet.
+
+    La dentelure compte quatre dents et non huit : à 16 px, huit dents se
+    referment en une bouillie grise et le signe perd ce qui le rendait
+    identifiable.
+
+    Palette 08 « Or antique » des 24 de la charte maison. Le dégradé suit la
+    recette : +45 % de blanc vers −22 % de noir, incliné à −15°.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Factura">
+  <defs>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate(-15 0.5 0.5)">
+      <stop offset="0" stop-color="#e4bd5c"/>
+      <stop offset="1" stop-color="#a67e12"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="64" height="64" rx="15" fill="url(#or)"/>
+
+  <!-- Le reçu. Coins supérieurs arrondis, bord inférieur détaché. -->
+  <path fill="#14100a" d="
+    M18 12 H46 Q49 12 49 15 V43
+    L44.75 47 L40.5 43 L36.25 47 L32 43 L27.75 47 L23.5 43 L19.25 47 L15 43
+    V15 Q15 12 18 12 Z"/>
+
+  <!-- Les lignes du document, en creux. La troisième est courte : c'est le
+       total, et c'est ce déséquilibre qui empêche de lire trois barres
+       identiques comme un simple menu. -->
+  <rect x="20" y="19.5" width="24" height="3.4" rx="1.7" fill="#e4bd5c"/>
+  <rect x="20" y="27"   width="24" height="3.4" rx="1.7" fill="#e4bd5c"/>
+  <rect x="20" y="34.5" width="13" height="3.4" rx="1.7" fill="#e4bd5c"/>
+</svg>

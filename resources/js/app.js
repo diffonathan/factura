@@ -26,6 +26,6 @@ createInertiaApp({
 
     progress: {
         // La barre de progression reprend le vert de la marque.
-        color: '#0F7B45',
+        color: '#d4a017',
     },
 });

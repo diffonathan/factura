@@ -72,20 +72,28 @@ export function moisCourt(valeur) {
         .format(new Date(Number(annee), Number(mois) - 1, 1))
 }
 
-/** Les couleurs d'état. Trois significations, jamais interchangées. */
+/**
+ * Le ton d'un état, selon les quatre rôles de la charte.
+ *
+ * Trois seulement servent ici, et jamais l'un pour l'autre : le VERT dit que
+ * l'argent est rentré, le ROUGE qu'il manque, le NEUTRE qu'on attend encore
+ * sans que ce soit un problème.
+ *
+ * L'accent or est délibérément absent : il porte l'action — boutons, liens,
+ * marque. Une pastille d'état de la même couleur qu'un bouton inviterait à
+ * cliquer dessus.
+ */
 export function tonStatut(statut, retard = 0) {
-    if (statut === 'SOLDE') return 'caisse'
-    if (statut === 'ANNULE' || statut === 'REFUSE' || statut === 'EXPIRE') return 'neutre'
-    if (statut === 'BROUILLON') return 'neutre'
-    if (retard > 0) return 'impaye'
-    if (statut === 'EMIS') return 'echeance'
+    if (statut === 'SOLDE') return 'gain'
+    if (retard > 0) return 'perte'
 
+    // Émis, brouillon, annulé, refusé, expiré : rien à célébrer, rien à
+    // alarmer. Le neutre est un choix, pas un défaut.
     return 'neutre'
 }
 
 export const CLASSES_TON = {
-    caisse: 'bg-caisse-clair text-caisse',
-    echeance: 'bg-echeance-clair text-echeance',
-    impaye: 'bg-impaye-clair text-impaye',
-    neutre: 'bg-papier-creux text-encre-douce',
+    gain: 'pastille-gain',
+    perte: 'pastille-perte',
+    neutre: 'pastille-neutre',
 }

@@ -46,7 +46,7 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
     <div class="flex items-baseline justify-between">
         <div>
             <h1 class="text-2xl font-semibold tracking-tight">Documents</h1>
-            <p class="mt-1 text-sm text-encre-douce">
+            <p class="mt-1 text-sm text-texte-doux">
                 {{ documents.total }} document{{ documents.total > 1 ? 's' : '' }} ·
                 devis, factures et avoirs
             </p>
@@ -58,12 +58,12 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
             v-model="recherche"
             type="search"
             placeholder="Référence, objet ou client…"
-            class="w-64 rounded-lg border border-trait bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+            class="champ w-64 rounded-lg px-3 py-2 text-sm"
         >
 
         <select
             :value="filtres.type"
-            class="rounded-lg border border-trait bg-white px-3 py-2 text-sm outline-none focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+            class="champ rounded-lg px-3 py-2 text-sm"
             @change="filtrer({ type: $event.target.value })"
         >
             <option value="">Tous les types</option>
@@ -72,7 +72,7 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
 
         <select
             :value="filtres.statut"
-            class="rounded-lg border border-trait bg-white px-3 py-2 text-sm outline-none focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+            class="champ rounded-lg px-3 py-2 text-sm"
             @change="filtrer({ statut: $event.target.value })"
         >
             <option value="">Tous les états</option>
@@ -82,17 +82,17 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
         <button
             v-if="filtres.type || filtres.statut || filtres.recherche"
             type="button"
-            class="text-[13px] font-medium text-encre-douce hover:text-encre"
+            class="text-[13px] font-medium text-texte-doux hover:text-texte"
             @click="recherche = ''; filtrer({ type: '', statut: '', recherche: '' })"
         >
             Effacer les filtres
         </button>
     </div>
 
-    <section class="mt-5 overflow-hidden rounded-2xl border border-trait bg-white">
+    <section class="mt-5 overflow-hidden verre rounded-2xl">
         <table class="w-full text-sm">
             <thead>
-                <tr class="border-b border-trait text-left text-[11px] uppercase tracking-wider text-encre-douce">
+                <tr class="border-b border-bordure text-left text-[11px] uppercase tracking-wider text-texte-doux">
                     <th class="px-5 py-3 font-semibold">Référence</th>
                     <th class="px-5 py-3 font-semibold">Client</th>
                     <th class="px-5 py-3 font-semibold">Objet</th>
@@ -106,25 +106,25 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
                 <tr
                     v-for="document in documents.data"
                     :key="document.id"
-                    class="border-b border-trait last:border-0 transition-colors hover:bg-papier-creux/60"
+                    class="border-b border-bordure last:border-0 transition-colors hover:bg-white/[0.025]"
                 >
                     <td class="px-5 py-3">
-                        <Link :href="`/documents/${document.id}`" class="nombre font-medium hover:text-caisse">
+                        <Link :href="`/documents/${document.id}`" class="nombre font-medium hover:text-accent">
                             {{ document.reference ?? '—' }}
                         </Link>
-                        <span class="block text-[11px] uppercase tracking-wide text-encre-douce">
+                        <span class="block text-[11px] uppercase tracking-wide text-texte-doux">
                             {{ LIBELLES_TYPE[document.type] }}
                         </span>
                     </td>
                     <td class="px-5 py-3">
                         {{ document.client }}
-                        <span class="block text-xs text-encre-douce">{{ document.ville }}</span>
+                        <span class="block text-xs text-texte-doux">{{ document.ville }}</span>
                     </td>
-                    <td class="max-w-[16rem] truncate px-5 py-3 text-encre-douce">{{ document.objet }}</td>
-                    <td class="nombre px-5 py-3 text-[13px] text-encre-douce">{{ date(document.date) }}</td>
+                    <td class="max-w-[16rem] truncate px-5 py-3 text-texte-doux">{{ document.objet }}</td>
+                    <td class="nombre px-5 py-3 text-[13px] text-texte-doux">{{ date(document.date) }}</td>
                     <td class="nombre px-5 py-3 text-right font-semibold">{{ montant(document.ttc) }}</td>
                     <td class="nombre px-5 py-3 text-right"
-                        :class="Number.parseFloat(document.reste) > 0 ? 'font-semibold' : 'text-encre-douce'">
+                        :class="Number.parseFloat(document.reste) > 0 ? 'font-semibold' : 'text-texte-doux'">
                         {{ montant(document.reste) }}
                     </td>
                     <td class="px-5 py-3">
@@ -138,7 +138,7 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
                 </tr>
 
                 <tr v-if="documents.data.length === 0">
-                    <td colspan="7" class="px-5 py-12 text-center text-sm text-encre-douce">
+                    <td colspan="7" class="px-5 py-12 text-center text-sm text-texte-doux">
                         Aucun document ne correspond à ces filtres.
                     </td>
                 </tr>
@@ -153,7 +153,7 @@ const LIBELLES_TYPE = { DEVIS: 'Devis', FACTURE: 'Facture', AVOIR: 'Avoir' }
             :href="lien.url ?? '#'"
             class="rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors"
             :class="[
-                lien.active ? 'bg-encre text-papier' : 'text-encre-douce hover:bg-papier-creux',
+                lien.active ? 'bg-surface-haute text-texte' : 'text-texte-doux hover:bg-surface',
                 lien.url ? '' : 'pointer-events-none opacity-40',
             ]"
             v-html="lien.label"

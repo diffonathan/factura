@@ -32,7 +32,7 @@ watch(terme, (valeur) => {
     <div class="flex flex-wrap items-baseline justify-between gap-4">
         <div>
             <h1 class="text-2xl font-semibold tracking-tight">Clients</h1>
-            <p class="mt-1 text-sm text-encre-douce">
+            <p class="mt-1 text-sm text-texte-doux">
                 {{ clients.length }} client{{ clients.length > 1 ? 's' : '' }} ·
                 encours et historique de facturation
             </p>
@@ -42,14 +42,14 @@ watch(terme, (valeur) => {
             v-model="terme"
             type="search"
             placeholder="Nom, ICE ou ville…"
-            class="w-64 rounded-lg border border-trait bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-caisse focus:ring-2 focus:ring-caisse/15"
+            class="champ w-64 rounded-lg px-3 py-2 text-sm"
         >
     </div>
 
-    <section class="mt-5 overflow-hidden rounded-2xl border border-trait bg-white">
+    <section class="mt-5 overflow-hidden verre rounded-2xl">
         <table class="w-full text-sm">
             <thead>
-                <tr class="border-b border-trait text-left text-[11px] uppercase tracking-wider text-encre-douce">
+                <tr class="border-b border-bordure text-left text-[11px] uppercase tracking-wider text-texte-doux">
                     <th class="px-5 py-3 font-semibold">Client</th>
                     <th class="px-5 py-3 font-semibold">ICE</th>
                     <th class="px-5 py-3 font-semibold">Contact</th>
@@ -63,38 +63,38 @@ watch(terme, (valeur) => {
                 <tr
                     v-for="client in clients"
                     :key="client.id"
-                    class="border-b border-trait last:border-0 transition-colors hover:bg-papier-creux/60"
+                    class="border-b border-bordure last:border-0 transition-colors hover:bg-white/[0.025]"
                 >
                     <td class="px-5 py-3">
                         <Link :href="`/documents?recherche=${encodeURIComponent(client.nom)}`"
-                              class="font-medium hover:text-caisse">
+                              class="font-medium hover:text-accent">
                             {{ client.nom }}
                         </Link>
-                        <span class="block text-xs text-encre-douce">
+                        <span class="block text-xs text-texte-doux">
                             {{ client.ville }}
                             <template v-if="client.est_particulier"> · particulier</template>
                         </span>
                     </td>
-                    <td class="nombre px-5 py-3 text-[13px] text-encre-douce">
+                    <td class="nombre px-5 py-3 text-[13px] text-texte-doux">
                         {{ client.ice ?? '—' }}
                     </td>
-                    <td class="px-5 py-3 text-[13px] text-encre-douce">
+                    <td class="px-5 py-3 text-[13px] text-texte-doux">
                         {{ client.email }}
                         <span class="nombre block text-xs">{{ client.telephone }}</span>
                     </td>
-                    <td class="nombre px-5 py-3 text-right text-[13px] text-encre-douce">
+                    <td class="nombre px-5 py-3 text-right text-[13px] text-texte-doux">
                         {{ client.delai }} j
                     </td>
                     <td class="nombre px-5 py-3 text-right text-[13px]">{{ client.factures }}</td>
                     <td class="nombre px-5 py-3 text-right font-medium">{{ montant(client.total) }}</td>
                     <td class="nombre px-5 py-3 text-right"
-                        :class="Number.parseFloat(client.reste) > 0 ? 'font-semibold text-echeance' : 'text-encre-douce'">
+                        :class="Number.parseFloat(client.reste) > 0 ? 'font-semibold text-texte-doux' : 'text-texte-doux'">
                         {{ montant(client.reste) }}
                     </td>
                 </tr>
 
                 <tr v-if="clients.length === 0">
-                    <td colspan="7" class="px-5 py-12 text-center text-sm text-encre-douce">
+                    <td colspan="7" class="px-5 py-12 text-center text-sm text-texte-doux">
                         Aucun client ne correspond à cette recherche.
                     </td>
                 </tr>
