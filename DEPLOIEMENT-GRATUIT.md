@@ -1,25 +1,26 @@
-# Mettre Factura en ligne sur Zeabur
+# Mettre Factura en ligne sur Back4App
 
-Zeabur a été retenu pour une raison simple : **aucune carte bancaire n'est
-demandée**. Render, Koyeb et Fly.io exigent tous une vérification par carte
-depuis 2026, et Hugging Face Docker Spaces n'est plus gratuit.
+Back4App Containers a été retenu pour une raison simple : **aucune carte
+bancaire n'est demandée**. En 2026, c'est devenu rare — Render, Koyeb et
+Fly.io exigent tous une vérification par carte, Hugging Face Docker Spaces
+n'est plus gratuit, et Zeabur a cessé d'accepter de nouveaux projets sur son
+cluster partagé.
 
-`zbpack.json` désigne le Dockerfile à construire : il vit dans
-`docker/php/Dockerfile.production` et non à la racine, parce que celui de la
-racine sert au développement et ne doit pas partir en production.
+L'offre libre donne 256 Mo. Mesuré sur cette image : **70 Mo** au repos. Large.
 
 ---
 
 ## 1. Le service
 
-**zeabur.com** → inscription par GitHub → **New Project** → région
-**Frankfurt** (la même que la base Neon : une base à Francfort et une
-application à Singapour, c'est 200 ms perdues à chaque requête).
+**back4app.com** → inscription → **Containers** → **Deploy a Web App** →
+connecter GitHub → dépôt **`diffonathan/factura`**.
 
-**Add Service → Git → `diffonathan/factura`**. Zeabur lit `zbpack.json`,
-trouve le Dockerfile et construit. Le premier déploiement prend cinq à huit
-minutes : il construit le front, installe les dépendances PHP, puis joue les
-migrations au démarrage.
+⚠️ **Le Dockerfile n'est pas à la racine.** Dans les réglages du déploiement,
+renseignez le chemin **`docker/php/Dockerfile.production`** : celui de la
+racine sert au développement et n'a rien à faire en production.
+
+Le premier déploiement prend cinq à huit minutes : il construit le front,
+installe les dépendances PHP, puis joue les migrations au démarrage.
 
 ## 2. Les quatre variables
 
@@ -47,9 +48,9 @@ ailleurs — c'est la clé de chiffrement de l'application.
 
 ## 3. Le domaine
 
-**Networking → Generate Domain**. Zeabur propose une adresse en
-`xxx.zeabur.app`. Reportez-la ensuite dans `APP_URL`, puis redéployez : sans
-elle, les URL absolues générées par Laravel pointeraient vers `localhost`.
+Back4App attribue une adresse en `*.b4a.run` dès le déploiement. Reportez-la
+dans `APP_URL`, puis redéployez : sans elle, les URL absolues générées par
+Laravel pointeraient vers `localhost`.
 
 ---
 
@@ -60,7 +61,7 @@ première visite suivante. Pour une démonstration montrée à un recruteur c'es
 acceptable **à condition de le dire** — le portfolio l'annonce déjà en toutes
 lettres.
 
-**512 Mo de mémoire.** Laravel y tient largement.
+**256 Mo de mémoire.** Mesuré : 70 Mo au repos. Laravel y tient largement.
 
 **Les files d'attente tournent en mode direct** (`QUEUE_CONNECTION=sync`) :
 l'offre ne permet pas un second processus. Les relances partent donc pendant
@@ -73,7 +74,7 @@ et c'est un réglage, pas une réécriture.
 ## Vérifier
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://VOTRE-ADRESSE.zeabur.app/up
+curl -s -o /dev/null -w "%{http_code}\n" https://VOTRE-ADRESSE.b4a.run/up
 ```
 
 `200` signifie que l'application répond **et** que la base est jointe : le
