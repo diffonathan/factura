@@ -6,6 +6,10 @@
 # contrôle de santé peut le déclarer bon alors qu'il ne l'est pas.
 set -e
 
+# Le serveur est lancé en arrière-plan plus bas ; son identifiant sert aux
+# fonctions d'erreur, qui sont définies avant lui.
+PID_SERVEUR=""
+
 # ---------------------------------------------------------------------------
 # Les variables, vérifiées AVANT de faire quoi que ce soit.
 #
@@ -36,6 +40,15 @@ erreur() {
 # variable manquante, c'est une valeur que le serveur rejette. Le titre doit
 # le dire, sinon on retourne vérifier ce qui est déjà correct.
 refus_base() {
+    # Le serveur tourne déjà quand on arrive ici : il faut l'arrêter, sinon le
+    # conteneur reste en vie à servir une application dont le schéma est
+    # incomplet — et l'hébergeur déclare le déploiement réussi.
+    # En liste « && », un test faux rend la fonction non nulle et `set -e`
+    # tuerait le script AVANT le message. D'où le `if`, et le `|| true`.
+    if [ -n "${PID_SERVEUR}" ]; then
+        kill "${PID_SERVEUR}" 2>/dev/null || true
+    fi
+
     echo ""
     echo "════════════════════════════════════════════════════════════════"
     echo "  LA BASE DE DONNÉES REFUSE LA CONNEXION"
@@ -114,6 +127,56 @@ else
 fi
 
 echo "→ configuration vérifiée"
+
+# ---------------------------------------------------------------------------
+# Le serveur D'ABORD, le travail lourd ensuite.
+#
+# L'ordre naturel serait : migrer, puis servir — on ne répond pas avant que le
+# schéma soit à jour. C'était l'ordre précédent, et il a coûté un déploiement.
+#
+# L'hébergeur teste le port 16 secondes après avoir lancé le conteneur, et
+# n'attend qu'une seconde. Or migrer contre une base distante qui se réveille,
+# semer le jeu de démonstration puis construire trois caches dépasse ce délai.
+# La plateforme tuait donc le conteneur EN PLEIN TRAVAIL, et jetait ses
+# journaux : on ne voyait ni erreur ni cause, juste « le conteneur s'est
+# arrêté avant d'être sain ». Le pire des échecs, celui qui ne dit rien.
+#
+# On ouvre donc le port tout de suite. `/up` ne touche pas la base : il répond
+# dès que PHP a démarré, le contrôle de santé passe, et les migrations ont
+# tout le temps qu'il leur faut. Si elles échouent, on le dit et on arrête —
+# mais cette fois le conteneur aura vécu assez longtemps pour que ses
+# journaux soient conservés.
+# ---------------------------------------------------------------------------
+# `--no-reload` n'est pas un détail de confort : sans lui, `artisan serve`
+# surveille les fichiers pour redémarrer quand ils changent, et ce guetteur
+# INTERDIT les processus multiples. PHP_CLI_SERVER_WORKERS=4 était donc lettre
+# morte — un seul processus servait tout, et le journal le disait :
+#
+#   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable
+#         without the `--no-reload` flag. Only creating a single server.
+#
+# En production les fichiers ne changent jamais : surveiller leurs dates coûte
+# du temps et ne sert personne. On rend donc les quatre processus effectifs,
+# ce qui évite qu'une requête lente bloque toutes les autres — dont le
+# contrôle de santé de l'hébergeur, qui conclurait à une panne.
+php artisan serve --host=0.0.0.0 --port="${PORT}" --no-reload &
+PID_SERVEUR=$!
+
+attente=0
+while [ "${attente}" -lt 40 ]; do
+    if php -r 'exit(@fsockopen("127.0.0.1", (int) getenv("PORT"), $e, $s, 1) ? 0 : 1);' 2>/dev/null; then
+        break
+    fi
+    attente=$((attente + 1))
+    sleep 0.25
+done
+
+if [ "${attente}" -ge 40 ]; then
+    echo "!! le serveur n'écoute toujours pas sur le port ${PORT} après 10 s"
+    exit 1
+fi
+
+echo "→ en écoute sur le port ${PORT} (le contrôle de santé peut passer)"
 
 # ---------------------------------------------------------------------------
 # Les migrations, avec leur sortie CONSERVÉE.
@@ -221,6 +284,7 @@ if [ "${code_migration}" -ne 0 ]; then
         *)
             # Cause inconnue : le journal ci-dessus est la seule vérité, on
             # n'y ajoute pas une interprétation inventée.
+            kill "${PID_SERVEUR}" 2>/dev/null || true
             echo ""
             echo "  Les migrations ont échoué. Le message exact est au-dessus."
             exit 1
@@ -246,18 +310,10 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
-echo "→ en écoute sur le port ${PORT}"
+echo "→ prêt : schéma à jour, caches construits"
 
-# `--no-reload` n'est pas un détail de confort : sans lui, `artisan serve`
-# surveille les fichiers pour redémarrer quand ils changent, et ce guetteur
-# INTERDIT les processus multiples. PHP_CLI_SERVER_WORKERS=4 était donc lettre
-# morte — un seul processus servait tout, et le journal le disait :
-#
-#   WARN  Unable to respect the `PHP_CLI_SERVER_WORKERS` environment variable
-#         without the `--no-reload` flag. Only creating a single server.
-#
-# En production les fichiers ne changent jamais : surveiller leurs dates coûte
-# du temps et ne sert personne. On rend donc les quatre processus effectifs,
-# ce qui évite qu'une requête lente bloque toutes les autres — dont le
-# contrôle de santé de l'hébergeur, qui conclurait à une panne.
-exec php artisan serve --host=0.0.0.0 --port="${PORT}" --no-reload
+# Le serveur tourne depuis le début ; il ne reste qu'à lui rendre la main. Ce
+# script est le processus n°1 du conteneur : tant qu'il attend, le conteneur
+# vit ; dès que le serveur s'arrête, il s'arrête aussi, et l'hébergeur le
+# relance.
+wait "${PID_SERVEUR}"
