@@ -166,6 +166,9 @@ TVA ventilée par taux et l'historique des règlements. Un brouillon s'y annonce
 comme tel : il n'a pas de numéro, et le PDF le dit en toutes lettres plutôt que
 de laisser un document de travail passer pour une facture.
 
-**92 tests, 210 assertions.**
+Une API REST permet de brancher un outil — caisse, site marchand, export
+comptable. Elle agit au nom d'une entreprise par jeton porteur, et réemploie le
+cloisonnement des modèles plutôt que d'en écrire un second : un document d'une
+autre société n'est jamais résolu. Voir [docs/API.md](docs/API.md).
 
-Reste à faire : une API REST documentée.
+**103 tests, 246 assertions.**

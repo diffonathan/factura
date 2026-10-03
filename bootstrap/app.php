@@ -2,6 +2,7 @@
 
 use App\Facturation\Exceptions\DocumentNonEmissible;
 use App\Facturation\Exceptions\ErreurFacturation;
+use App\Http\Middleware\AuthentifierJetonApi;
 use App\Http\Middleware\DefinirEntrepriseCourante;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -12,6 +13,10 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        // L'API vit dans son propre fichier, sans session ni cookie : un jeton
+        // porteur suffit, et le groupe « web » ajouterait une protection CSRF
+        // qui n'a aucun sens pour un appel de serveur à serveur.
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -28,6 +33,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // filtrent seuls, et un contrôleur ne peut plus l'oublier.
         $middleware->alias([
             'entreprise' => DefinirEntrepriseCourante::class,
+            // L'équivalent pour l'API : il authentifie le jeton ET pose
+            // l'entreprise. Les deux en une pièce, pour qu'il n'existe pas
+            // d'état « authentifié mais non cloisonné ».
+            'jeton.api' => AuthentifierJetonApi::class,
         ]);
 
         // Sans cela, un visiteur non connecté reçoit la page de connexion de

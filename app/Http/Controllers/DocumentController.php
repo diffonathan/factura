@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Facturation\Exceptions\ConflitFacturation;
 use App\Facturation\GenerateurPdf;
 use App\Facturation\ModePaiement;
+use App\Facturation\ReglesDocument;
 use App\Facturation\ServiceEmission;
 use App\Facturation\ServiceEncaissement;
 use App\Facturation\ServiceRelance;
@@ -185,7 +186,7 @@ final class DocumentController extends Controller
     {
         $this->refuserSiEmis($document);
 
-        Ligne::creerPour($document, $requete->validate($this->reglesLigne()));
+        Ligne::creerPour($document, $requete->validate(ReglesDocument::ligne()));
 
         return back()->with('succes', 'Ligne ajoutée.');
     }
@@ -195,7 +196,7 @@ final class DocumentController extends Controller
         $this->refuserSiEmis($document);
         $this->refuserSiEtrangere($document, $ligne);
 
-        $ligne->update($requete->validate($this->reglesLigne()));
+        $ligne->update($requete->validate(ReglesDocument::ligne()));
 
         return back()->with('succes', 'Ligne modifiée.');
     }
@@ -212,56 +213,22 @@ final class DocumentController extends Controller
 
     // ------------------------------------------------------------------
 
-    /** @return array<string, mixed> */
+    /**
+     * Les règles vivent dans `ReglesDocument`, partagées avec l'API.
+     *
+     * Elles étaient ici tant qu'il n'y avait qu'une porte d'entrée. Avec deux,
+     * les garder dans un contrôleur garantissait la divergence : un taux de TVA
+     * ajouté d'un côté, et l'autre refuse ce que la base accepte.
+     *
+     * @return array<string, mixed>
+     */
     private function validerDocument(Request $requete, bool $avecLignes, bool $avecType = true): array
     {
         $entrepriseId = app(EntrepriseCourante::class)->idObligatoire();
 
-        $regles = [
-            // Le client doit appartenir À CETTE entreprise. Un simple
-            // `exists:clients,id` laisserait facturer au nom du client d'une
-            // autre société en changeant un identifiant dans la requête.
-            'client_id' => [
-                'required',
-                Rule::exists('clients', 'id')->where('entreprise_id', $entrepriseId),
-            ],
-            'date_emission' => ['required', 'date'],
-            'date_echeance' => ['nullable', 'date', 'after_or_equal:date_emission'],
-            'objet' => ['nullable', 'string', 'max:200'],
-            'conditions' => ['nullable', 'string', 'max:2000'],
-            'notes_internes' => ['nullable', 'string', 'max:2000'],
-        ];
-
-        if ($avecType) {
-            $regles['type'] = ['required', Rule::enum(TypeDocument::class)];
-        }
-
-        if ($avecLignes) {
-            $regles['lignes'] = ['array'];
-
-            foreach ($this->reglesLigne() as $champ => $contraintes) {
-                $regles["lignes.*.{$champ}"] = $contraintes;
-            }
-        }
-
-        return $requete->validate($regles);
-    }
-
-    /** @return array<string, list<mixed>> */
-    private function reglesLigne(): array
-    {
-        return [
-            'designation' => ['required', 'string', 'max:255'],
-            'unite' => ['nullable', 'string', 'max:16'],
-            'quantite' => ['required', 'numeric', 'gt:0'],
-            'prix_unitaire_ht' => ['required', 'numeric', 'min:0'],
-            'remise_pct' => ['nullable', 'numeric', 'between:0,100'],
-
-            // Les cinq taux marocains, et rien d'autre. La base pose la même
-            // contrainte ; la répéter ici sert seulement à rendre un message
-            // de formulaire plutôt qu'une erreur de base de données.
-            'taux_tva' => ['required', 'numeric', Rule::in([0, 7, 10, 14, 20])],
-        ];
+        return $requete->validate($avecLignes
+            ? ReglesDocument::complet($entrepriseId, $avecType)
+            : ReglesDocument::enTete($entrepriseId, $avecType));
     }
 
     /**
