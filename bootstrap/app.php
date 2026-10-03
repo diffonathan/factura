@@ -42,6 +42,29 @@ return Application::configure(basePath: dirname(__DIR__))
         // Sans cela, un visiteur non connecté reçoit la page de connexion de
         // Laravel par défaut, à une route `login` qui n'existe pas ici.
         $middleware->redirectGuestsTo(fn () => route('connexion'));
+
+        /*
+         * Faire confiance au proxy de l'hébergeur.
+         *
+         * Un hébergeur de conteneurs termine le TLS sur son proxy et transmet
+         * du HTTP en clair à l'application. Laravel ne voit donc qu'une
+         * requête « http » et fabrique toutes ses adresses avec ce schéma —
+         * y compris celles des fichiers du front. Le navigateur, lui, a chargé
+         * la page en HTTPS : il bloque ces requêtes en « contenu mixte », et
+         * la page reste BLANCHE. Pas d'erreur serveur, pas de 500, rien dans
+         * les journaux — seulement une page vide et trois lignes dans la
+         * console du navigateur.
+         *
+         * Avec cette ligne, l'en-tête `X-Forwarded-Proto` est lu et tout
+         * redevient cohérent : les adresses, les redirections, et les cookies
+         * de session qui méritent leur attribut « secure ».
+         *
+         * `'*'` plutôt qu'une liste d'adresses : sur un hébergeur de ce type,
+         * l'adresse du proxy n'est ni fixe ni connue à l'avance. Ce n'est
+         * acceptable que parce que le conteneur n'est joignable QUE par ce
+         * proxy — personne d'autre ne peut lui présenter ces en-têtes.
+         */
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
