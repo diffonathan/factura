@@ -13,6 +13,18 @@ partent toutes seules.
 
 > **Projet de démonstration.** Les entreprises et les clients sont inventés.
 
+## Essayer
+
+**→ [factura-eu.onrender.com](https://factura-eu.onrender.com)**
+
+Les identifiants de démonstration sont déjà saisis sur l'écran de connexion.
+Créez une facture, émettez-la — le numéro légal est attribué à cet instant et
+le document devient immuable — puis téléchargez son PDF.
+
+> L'hébergement est gratuit, donc l'application s'endort après quinze minutes
+> sans visite. Le premier appel la réveille et peut demander une minute ; les
+> suivants répondent en moins de 400 ms.
+
 ---
 
 ## Les technologies
