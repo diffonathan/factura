@@ -49,6 +49,12 @@ Route::middleware(['auth', 'entreprise'])->group(function (): void {
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
 
     Route::get('/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+
+    // Le PDF du document, reconstruit à chaque demande depuis la base. Rien
+    // n'est stocké : un hébergement gratuit n'a pas de disque persistant, et
+    // un PDF figé se désynchroniserait d'un document encore en brouillon.
+    Route::get('/documents/{document}/pdf', [DocumentController::class, 'pdf'])->name('documents.pdf');
+
     Route::patch('/documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 

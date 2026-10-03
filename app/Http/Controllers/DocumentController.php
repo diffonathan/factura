@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Facturation\Exceptions\ConflitFacturation;
+use App\Facturation\GenerateurPdf;
 use App\Facturation\ModePaiement;
 use App\Facturation\ServiceEmission;
 use App\Facturation\ServiceEncaissement;
@@ -16,6 +17,7 @@ use App\Models\Document;
 use App\Models\Ligne;
 use App\Support\EntrepriseCourante;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
@@ -383,6 +385,26 @@ final class DocumentController extends Controller
                 fn (ModePaiement $mode) => ['valeur' => $mode->value, 'libelle' => $mode->libelle()],
                 ModePaiement::cases(),
             ),
+        ]);
+    }
+
+    /**
+     * Le document en PDF, tel qu'il sera remis au client.
+     *
+     * Aucune vérification d'appartenance ici, et ce n'est pas un oubli : le
+     * modèle porte une portée globale par entreprise, si bien qu'un document
+     * d'une autre entreprise n'est jamais résolu — la route rend 404 avant
+     * d'entrer dans la méthode. Un contrôle écrit à la main ferait croire que
+     * c'est lui qui protège, et son absence ailleurs passerait pour une faille.
+     */
+    public function pdf(Document $document, GenerateurPdf $generateur): HttpResponse
+    {
+        return response($generateur->rendre($document), 200, [
+            'Content-Type' => 'application/pdf',
+            // `inline` et non `attachment` : le navigateur affiche le document,
+            // et l'enregistrer reste à un clic. Forcer le téléchargement
+            // obligerait à ouvrir un fichier pour vérifier une ligne.
+            'Content-Disposition' => 'inline; filename="'.$generateur->nomDeFichier($document).'"',
         ]);
     }
 

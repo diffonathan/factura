@@ -157,6 +157,19 @@ const TITRE_TAUX = { '0.00': 'Exonéré', '7.00': '7 %', '10.00': '10 %', '14.00
             >
                 Enregistrer un règlement
             </button>
+
+            <!-- Un vrai lien, pas un bouton qui déclencherait une requête
+                 Inertia : le PDF est une navigation du navigateur, et seul un
+                 lien permet de l'ouvrir dans un onglet ou de l'enregistrer par
+                 le menu contextuel. Un bouton perdrait ces deux gestes. -->
+            <a
+                :href="`/documents/${document.id}/pdf`"
+                target="_blank"
+                rel="noopener"
+                class="bouton-discret rounded-lg px-4 py-2 text-[13px] font-semibold"
+            >
+                {{ document.est_brouillon ? 'Aperçu PDF' : 'PDF' }}
+            </a>
         </div>
     </div>
 

@@ -161,7 +161,11 @@ Le métier est complet et testé : entreprises, clients, devis, factures, avoirs
 encaissements partiels, relances à trois niveaux, cloisonnement multi-entreprise,
 tableau de bord.
 
-**78 tests, 170 assertions.**
+Le document se télécharge en PDF, avec les mentions légales de l'émetteur, la
+TVA ventilée par taux et l'historique des règlements. Un brouillon s'y annonce
+comme tel : il n'a pas de numéro, et le PDF le dit en toutes lettres plutôt que
+de laisser un document de travail passer pour une facture.
 
-Reste à faire : export PDF des documents, édition des lignes depuis l'interface,
-API REST documentée.
+**92 tests, 210 assertions.**
+
+Reste à faire : une API REST documentée.
